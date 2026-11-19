@@ -13,6 +13,6 @@ RUN chmod +x /docker-entrypoint-pedidos360.sh
 EXPOSE 80
 
 HEALTHCHECK --interval=15s --timeout=3s --start-period=5s --retries=3 \
-    CMD wget -qO- http://localhost/salud || exit 1
+    CMD wget -qO- http://127.0.0.1/salud || exit 1
 
 ENTRYPOINT ["/docker-entrypoint-pedidos360.sh"]
