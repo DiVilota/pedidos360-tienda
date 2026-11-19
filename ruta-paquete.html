@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ruta del paquete · Pedidos360</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H" crossorigin="anonymous">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH" crossorigin="anonymous"></script>
+<style>
+html,body{margin:0;height:100%;background:#0b1220;color:#e8eef8;font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-size:14px;line-height:1.5}
+a{color:#38bdf8}a:hover{color:#7dd3fc}
+*{box-sizing:border-box}
+.wrap{display:grid;grid-template-columns:minmax(0,1fr) 320px;height:100%}
+@media(max-width:760px){.wrap{grid-template-columns:1fr;grid-template-rows:minmax(320px,58vh) auto;height:auto;min-height:100%}aside{border-left:0!important;border-top:1px solid #263349}}
+#map{min-height:320px;background:#0b1220}
+.leaflet-container{background:#0b1220;font-family:inherit}
+.leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.82) contrast(.9) saturate(.45)}
+.leaflet-control-attribution{background:rgba(11,18,32,.85)!important;color:#93a3bd!important}
+.leaflet-control-attribution a{color:#38bdf8!important}
+.leaflet-bar a{background:#111a2b!important;color:#e8eef8!important;border-color:#263349!important}
+.leaflet-bar a:hover{background:#18233a!important;color:#38bdf8!important}
+.leaflet-bar{border:1px solid #263349!important;box-shadow:none!important}
+.lbl{background:#111a2b;border:1px solid #263349;color:#e8eef8;border-radius:4px;box-shadow:0 6px 18px rgba(0,0,0,.45);font-size:12px;padding:4px 8px}
+.lbl:before{display:none}
+.pin{width:16px;height:16px;border-radius:4px;border:2px solid #0b1220}
+.pin.o{background:#93a3bd}
+.pin.d{background:#22c55e;border-radius:50%;box-shadow:0 0 12px #22c55e}
+.trk{position:relative;width:22px;height:22px}
+.trk span{position:absolute;inset:0;border-radius:50%}
+.trk .core{inset:4px;background:#38bdf8;border:2px solid #0b1220;box-shadow:0 0 14px #38bdf8}
+.trk .ring{background:rgba(56,189,248,.5);animation:pulse 1.6s ease-out infinite}
+@keyframes pulse{0%{transform:scale(.6);opacity:.9}100%{transform:scale(2.6);opacity:0}}
+aside{background:#111a2b;border-left:1px solid #263349;padding:22px;display:flex;flex-direction:column;gap:20px;overflow:auto}
+.mono{font-family:ui-monospace,Menlo,monospace}
+.k{font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:#5d6e8a;font-weight:600}
+.chip{align-self:flex-start;font-family:ui-monospace,Menlo,monospace;font-size:11.5px;padding:4px 10px;border-radius:3px;border:1px solid rgba(56,189,248,.45);color:#38bdf8}
+.chip.ok{border-color:rgba(34,197,94,.45);color:#22c55e}
+.chip.wait{border-color:#263349;color:#93a3bd}
+.eta{font-size:30px;font-weight:650;letter-spacing:-.6px;line-height:1.15}
+.bar{height:5px;border-radius:3px;background:#18233a;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:#38bdf8;box-shadow:0 0 10px #38bdf8;transition:width .3s linear}
+.row{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;color:#93a3bd}
+.stops{display:flex;flex-direction:column;gap:14px;margin:0;padding:0;list-style:none}
+.stops li{display:grid;grid-template-columns:14px 1fr;gap:10px;align-items:start}
+.stops b{display:block;font-weight:600;font-size:13.5px}
+.stops span{color:#93a3bd;font-size:12.5px}
+.dot{width:10px;height:10px;margin-top:5px;border-radius:2px;background:#93a3bd}
+.dot.d{border-radius:50%;background:#22c55e;box-shadow:0 0 8px #22c55e}
+.now{padding:12px 14px;border:1px solid #263349;border-radius:6px;background:#0b1220}
+.now b{display:block;font-size:14px;margin-top:2px}
+button{all:unset;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 16px;border-radius:5px;font-weight:650;font-size:13.5px;background:#38bdf8;color:#04101f;box-shadow:0 0 18px rgba(56,189,248,.4);transition:all .2s ease}
+button:hover{background:#7dd3fc;box-shadow:0 0 28px rgba(56,189,248,.65)}
+button:active{background:#0ea5e9}
+button:focus-visible{outline:2px solid #38bdf8;outline-offset:2px}
+button[disabled]{opacity:.45;cursor:default}
+.note{font-size:11.5px;color:#5d6e8a;margin:0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="map" role="img" aria-label="Mapa con la ruta del paquete"></div>
+  <aside>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div class="mono" style="font-size:11.5px;color:#38bdf8">// ruta del paquete</div>
+      <div class="mono" id="oid" style="font-size:20px;font-weight:600"></div>
+      <span class="chip" id="chip"></span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div class="k" id="etaK">Llegada estimada</div>
+      <div class="eta" id="eta">Calculando ruta…</div>
+      <div class="bar"><i id="bar"></i></div>
+      <div class="row"><span id="pct">0%</span><span id="km"></span></div>
+    </div>
+    <div class="now" id="nowBox" hidden><span class="k">Ahora por</span><b id="street"></b></div>
+    <ul class="stops">
+      <li><span class="dot"></span><div><b>Bodega Quilicura</b><span>Centro de distribución Pedidos360</span></div></li>
+      <li><span class="dot d"></span><div><b>Tu domicilio</b><span id="dest"></span></div></li>
+    </ul>
+    <button id="sim" disabled>Simular recorrido completo</button>
+    <p class="note" id="src">Simulación con fines académicos.</p>
+  </aside>
+</div>
+<script>
+const q = new URLSearchParams(location.search);
+const ID = q.get('id') || 'P-1057', STAGE = Math.max(0, Math.min(4, +(q.get('stage') ?? 3))), DEST = q.get('dest') || 'Av. Los Leones 123, Providencia';
+const STG = ['Pedido recibido', 'Preparando', 'Enviado', 'En camino', 'Entregado'];
+const ORIGIN = [-33.3597, -70.7275];
+const COM = { 'providencia': [-33.4255, -70.611], 'las condes': [-33.411, -70.567], 'nunoa': [-33.4569, -70.5979], 'vitacura': [-33.39, -70.57], 'la reina': [-33.445, -70.54], 'penalolen': [-33.485, -70.54], 'macul': [-33.487, -70.599], 'la florida': [-33.5227, -70.598], 'puente alto': [-33.6117, -70.5758], 'san miguel': [-33.497, -70.651], 'maipu': [-33.511, -70.758], 'pudahuel': [-33.44, -70.76], 'estacion central': [-33.46, -70.7], 'recoleta': [-33.406, -70.64], 'independencia': [-33.417, -70.665], 'quinta normal': [-33.428, -70.698], 'lo barnechea': [-33.35, -70.52], 'huechuraba': [-33.37, -70.635], 'santiago': [-33.4489, -70.6693] };
+const norm = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+const hash = s => [...s].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 7);
+function destLL() {
+  const n = norm(DEST);
+  if (n.includes('los leones')) return [-33.4219, -70.6069];
+  const k = Object.keys(COM).find(k => n.includes(k)) || 'santiago', h = hash(n), c = COM[k];
+  return [c[0] + ((h % 100) / 100) * 0.008 - 0.004, c[1] + (((h >> 8) % 100) / 100) * 0.008 - 0.004];
+}
+const D = destLL();
+const $ = id => document.getElementById(id);
+$('oid').textContent = ID; $('dest').textContent = DEST;
+$('chip').textContent = STG[STAGE];
+$('chip').className = 'chip' + (STAGE === 4 ? ' ok' : STAGE < 2 ? ' wait' : '');
+addEventListener('keydown', e => { if (e.key === 'Escape' && parent !== window) parent.postMessage({ type: 'p360-route-close' }, '*'); });
+
+const map = L.map('map', { zoomControl: true }).fitBounds([ORIGIN, D], { padding: [50, 50] });
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap contributors' }).addTo(map);
+const icon = (cls, s) => L.divIcon({ className: '', html: cls, iconSize: [s, s], iconAnchor: [s / 2, s / 2] });
+L.marker(ORIGIN, { icon: icon('<div class="pin o"></div>', 16) }).addTo(map).bindTooltip('Bodega Quilicura', { permanent: true, direction: 'top', offset: [0, -10], className: 'lbl' });
+L.marker(D, { icon: icon('<div class="pin d"></div>', 16) }).addTo(map).bindTooltip('Tu domicilio', { permanent: true, direction: 'top', offset: [0, -10], className: 'lbl' });
+
+async function getRoute() {
+  try {
+    const ctl = new AbortController(); setTimeout(() => ctl.abort(), 6000);
+    const r = await fetch(`https://router.project-osrm.org/route/v1/driving/${ORIGIN[1]},${ORIGIN[0]};${D[1]},${D[0]}?overview=full&geometries=geojson&steps=true`, { signal: ctl.signal });
+    const R = (await r.json()).routes[0];
+    return { pts: R.geometry.coordinates.map(c => [c[1], c[0]]), dur: R.duration * 1.35, steps: R.legs[0].steps.map(s => ({ name: s.name, d: s.distance })), real: true };
+  } catch (e) {
+    const pts = [], m = [(ORIGIN[0] + D[0]) / 2 + 0.012, (ORIGIN[1] + D[1]) / 2 - 0.012];
+    for (let i = 0; i <= 80; i++) { const t = i / 80, a = (1 - t) ** 2, b = 2 * (1 - t) * t, c = t * t; pts.push([a * ORIGIN[0] + b * m[0] + c * D[0], a * ORIGIN[1] + b * m[1] + c * D[1]]); }
+    return { pts, dur: null, steps: [], real: false };
+  }
+}
+
+getRoute().then(R => {
+  const cum = [0];
+  for (let i = 1; i < R.pts.length; i++) cum.push(cum[i - 1] + L.latLng(R.pts[i - 1]).distanceTo(R.pts[i]));
+  const total = cum[cum.length - 1], dur = R.dur || total / 25000 * 3600;
+  let sc = 0; const stepCum = R.steps.map(s => (sc += s.d));
+  const live = STAGE >= 2;
+  L.polyline(R.pts, { color: live ? '#38bdf8' : '#5d6e8a', weight: 4, opacity: .4, dashArray: '2 8', lineCap: 'round' }).addTo(map);
+  const glow = L.polyline([], { color: '#38bdf8', weight: 12, opacity: .18 }).addTo(map);
+  const done = L.polyline([], { color: '#38bdf8', weight: 4, opacity: 1 }).addTo(map);
+  const truck = L.marker(ORIGIN, { icon: icon('<div class="trk"><span class="ring"></span><span class="core"></span></div>', 22), zIndexOffset: 1000 }).addTo(map);
+  map.fitBounds(L.latLngBounds(R.pts), { padding: [50, 50] });
+  $('src').textContent = R.real ? 'Simulación con fines académicos. Ruta real por calles calculada con OSRM sobre OpenStreetMap.' : 'Simulación con fines académicos. Sin conexión al servicio de rutas: trazado aproximado.';
+
+  function at(p) {
+    const d = p * total; let i = cum.findIndex(c => c >= d); if (i <= 0) i = 1;
+    const t = (d - cum[i - 1]) / ((cum[i] - cum[i - 1]) || 1), a = R.pts[i - 1], b = R.pts[i];
+    return { ll: [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t], i };
+  }
+  function draw(p, simulating) {
+    const { ll, i } = at(p), path = R.pts.slice(0, i).concat([ll]);
+    done.setLatLngs(p > 0 ? path : []); glow.setLatLngs(p > 0 ? path : []); truck.setLatLng(ll);
+    $('bar').style.width = (p * 100).toFixed(1) + '%';
+    $('pct').textContent = Math.round(p * 100) + '% del recorrido';
+    $('km').textContent = p >= 1 ? (total / 1000).toFixed(1) + ' km recorridos' : ((total * (1 - p)) / 1000).toFixed(1) + ' km restantes';
+    const st = STAGE === 4 && !simulating ? 4 : p >= 1 ? 4 : simulating || STAGE === 3 ? 3 : STAGE;
+    $('etaK').textContent = st === 4 ? 'Estado' : 'Llegada estimada';
+    $('eta').textContent = st === 4 ? 'Entregado' : st < 2 ? 'Aún en bodega' : st === 2 ? 'Saliendo de bodega' : '~' + Math.max(1, Math.round(dur * (1 - p) / 60)) + ' min';
+    const name = R.steps.length && p > 0 && p < 1 ? (R.steps.slice(stepCum.findIndex(c => c >= p * total)).find(s => s.name) || {}).name : '';
+    $('nowBox').hidden = !name; $('street').textContent = name || '';
+  }
+
+  const base = STAGE < 2 ? 0 : STAGE === 2 ? 0.03 : STAGE === 4 ? 1 : null;
+  let raf, t0;
+  function liveLoop(ts) { t0 = t0 || ts; draw(0.1 + Math.min(1, (ts - t0) / 45000) * 0.82); raf = requestAnimationFrame(liveLoop); }
+  function rest() { cancelAnimationFrame(raf); t0 = null; if (base == null) raf = requestAnimationFrame(liveLoop); else draw(base); $('sim').disabled = false; }
+  $('sim').onclick = () => {
+    cancelAnimationFrame(raf); $('sim').disabled = true; let s0;
+    const run = ts => { s0 = s0 || ts; const p = Math.min(1, (ts - s0) / 14000); draw(p, true); if (p < 1) raf = requestAnimationFrame(run); else setTimeout(rest, 2200); };
+    raf = requestAnimationFrame(run);
+  };
+  rest();
+});
+</script>
+</body>
+</html>
