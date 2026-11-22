@@ -1,12 +1,36 @@
-# Tienda Pedidos360 — imagen de servido estatico.
-# Se sirve por HTTP (no file://) para que el CORS vea un origen real.
+# Tienda Pedidos360 — compilación con Vite y servido estático con nginx.
+#
+# nginx y no "abrir el archivo": con file:// el origen es "null" y el CORS de
+# los microservicios declara orígenes concretos (8091 en Docker). Además la
+# vuelta de Webpay llega a /callback, una ruta de la SPA que sólo existe si
+# un servidor hace el fallback a index.html.
 
+# ---------- etapa 1: compilación ----------
+FROM node:22-alpine AS build
+
+WORKDIR /app
+
+# Manifiestos primero: la capa de dependencias se reutiliza mientras no
+# cambien, así tocar código no reinstala node_modules.
+COPY package.json package-lock.json ./
+RUN npm ci
+
+COPY tsconfig*.json vite.config.ts index.html ./
+COPY public ./public
+COPY src ./src
+RUN npm run build
+
+# ---------- etapa 2: servido ----------
 FROM nginx:1.27-alpine
 
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-COPY index.html ruta-paquete.html support.js logo-pedidos360.svg /usr/share/nginx/html/
+# Sólo el resultado de la compilación: ni node_modules ni el código fuente
+# llegan a la imagen final.
+COPY --from=build /app/dist /usr/share/nginx/html
 
+# El entrypoint genera config.js con las URL del entorno antes de arrancar
+# nginx y sobrescribe el config.js de desarrollo que viene en dist/.
 COPY docker-entrypoint.sh /docker-entrypoint-pedidos360.sh
 RUN chmod +x /docker-entrypoint-pedidos360.sh
 

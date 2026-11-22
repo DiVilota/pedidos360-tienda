@@ -1,3 +1,8 @@
 .git
+node_modules
+dist
+docs
+mocks
+_capturas
+*.log
 README.md
-config.js
