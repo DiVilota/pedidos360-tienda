@@ -98,6 +98,7 @@ src/
 public/                     config.js (dev), logo, ruta-paquete.html (mapa)
 mocks/servidor-mock.mjs     los cinco servicios en memoria (npm run mock)
 docs/prototipo/             exportación original de Claude Design (referencia)
+docs/trabajo/               bitácora por tarea (el porqué de cada decisión)
 ```
 
 ## Desarrollo
@@ -128,6 +129,14 @@ Tarjetas de la pasarela de prueba: `4051 8856 0044 6623` (aprobada) y
 `GAMER5000` (mínimo $50.000).
 
 ## Correr con Docker
+
+Lo normal es levantarla con todo el sistema desde el `docker-compose.yml` raíz
+del backend (`cloud-ev3-kafka`), que construye esta imagen desde `TIENDA_DIR`
+y la publica en `8091`. El `.env.example` trae `TIENDA_DIR=../pedidos360-tienda`;
+si clonaste este repo con otro nombre (p. ej. `tienda/`), ajústalo en el `.env`.
+
+Sola, contra servicios ya levantados (8091 y no 8080: 8080 es Kafka UI en el
+compose y no está en `CORS_ORIGENES`):
 
 ```bash
 docker build -t pedidos360-tienda .
