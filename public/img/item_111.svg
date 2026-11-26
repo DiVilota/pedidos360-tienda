@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img"
+     aria-label="Switch OLED — imagen ilustrativa">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0d2320"/><stop offset="1" stop-color="#123330"/>
+    </linearGradient>
+    <radialGradient id="h" cx="50%" cy="48%" r="62%">
+      <stop offset="0" stop-color="#34d399" stop-opacity=".14"/>
+      <stop offset="1" stop-color="#34d399" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#g)"/>
+  <rect width="800" height="600" fill="url(#h)"/>
+  <g>
+  <rect x="306" y="192" width="188" height="264" rx="14" fill="none" stroke="#34d399" stroke-width="13"/>
+  <rect x="326" y="212" width="148" height="224" rx="7" fill="#34d399" opacity=".18"/>
+  <rect x="216" y="180" width="72" height="288" rx="34" fill="#34d399" opacity=".30" stroke="#34d399" stroke-width="12"/>
+  <rect x="512" y="180" width="72" height="288" rx="34" fill="#34d399" opacity=".30" stroke="#34d399" stroke-width="12"/>
+  <circle cx="252" cy="244" r="16" fill="#34d399" opacity=".55"/>
+  <circle cx="252" cy="392" r="11" fill="#34d399" opacity=".40"/>
+  <circle cx="548" cy="404" r="16" fill="#34d399" opacity=".55"/>
+  <circle cx="548" cy="252" r="11" fill="#34d399" opacity=".40"/>
+  </g>
+</svg>

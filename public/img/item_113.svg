@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img"
+     aria-label="Bravia 55&quot; 4K — imagen ilustrativa">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0c2130"/><stop offset="1" stop-color="#113042"/>
+    </linearGradient>
+    <radialGradient id="h" cx="50%" cy="48%" r="62%">
+      <stop offset="0" stop-color="#22d3ee" stop-opacity=".14"/>
+      <stop offset="1" stop-color="#22d3ee" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#g)"/>
+  <rect width="800" height="600" fill="url(#h)"/>
+  <g>
+  <rect x="152" y="152" width="496" height="296" rx="14" fill="none" stroke="#22d3ee" stroke-width="13"/>
+  <rect x="176" y="176" width="448" height="248" rx="6" fill="#22d3ee" opacity=".16"/>
+  <rect x="368" y="448" width="64" height="40" fill="#22d3ee" opacity=".35"/>
+  <rect x="276" y="488" width="248" height="15" rx="7.5" fill="#22d3ee" opacity=".45"/>
+  </g>
+</svg>

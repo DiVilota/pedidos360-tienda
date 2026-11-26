@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img"
+     aria-label="Cargador GaN 65 W — imagen ilustrativa">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#141a22"/><stop offset="1" stop-color="#1d2531"/>
+    </linearGradient>
+    <radialGradient id="h" cx="50%" cy="48%" r="62%">
+      <stop offset="0" stop-color="#cbd5e1" stop-opacity=".14"/>
+      <stop offset="1" stop-color="#cbd5e1" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#g)"/>
+  <rect width="800" height="600" fill="url(#h)"/>
+  <g>
+  <rect x="276" y="216" width="248" height="248" rx="44" fill="#cbd5e1" opacity=".20" stroke="#cbd5e1" stroke-width="13"/>
+  <rect x="352" y="156" width="26" height="64" rx="8" fill="#cbd5e1" opacity=".55"/>
+  <rect x="422" y="156" width="26" height="64" rx="8" fill="#cbd5e1" opacity=".55"/>
+  <rect x="358" y="400" width="84" height="26" rx="13" fill="none" stroke="#cbd5e1" stroke-width="11"/>
+  </g>
+</svg>

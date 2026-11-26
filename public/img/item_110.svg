@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img"
+     aria-label="PlayStation 5 — imagen ilustrativa">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0d2320"/><stop offset="1" stop-color="#123330"/>
+    </linearGradient>
+    <radialGradient id="h" cx="50%" cy="48%" r="62%">
+      <stop offset="0" stop-color="#34d399" stop-opacity=".14"/>
+      <stop offset="1" stop-color="#34d399" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#g)"/>
+  <rect width="800" height="600" fill="url(#h)"/>
+  <g>
+  <rect x="344" y="120" width="112" height="380" rx="10" fill="#34d399" opacity=".34"/>
+  <path d="M344 120 q-34 190 0 380 h-54 q-38 -200 0 -380 Z" fill="#34d399" opacity=".16" stroke="#34d399" stroke-width="12" stroke-linejoin="round"/>
+  <path d="M456 120 q34 190 0 380 h54 q38 -200 0 -380 Z" fill="#34d399" opacity=".16" stroke="#34d399" stroke-width="12" stroke-linejoin="round"/>
+  <rect x="344" y="120" width="112" height="380" rx="10" fill="none" stroke="#34d399" stroke-width="12"/>
+  <line x1="400" y1="300" x2="400" y2="300" stroke="#34d399" stroke-width="0"/>
+  <circle cx="400" cy="462" r="9" fill="#34d399" opacity=".7"/>
+  </g>
+</svg>
