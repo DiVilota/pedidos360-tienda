@@ -14,7 +14,8 @@ import type { Senal } from '../lib/senales'
 export type ProductoMin = Pick<Producto, 'id' | 'nombre' | 'categoria'>
 
 export type EstadoServicio = 'arriba' | 'degradado' | 'caido' | null
-export type EstadoStream = 'conectando' | 'abierto' | 'reintentando' | 'rendido'
+/* sondeo: el stream SSE no está disponible (API Gateway) y se relee el listado cada pocos segundos */
+export type EstadoStream = 'conectando' | 'abierto' | 'reintentando' | 'rendido' | 'sondeo'
 
 export type Toast = { id: number; texto: string; tono: 'ok' | 'bad'; verCarrito?: boolean }
 

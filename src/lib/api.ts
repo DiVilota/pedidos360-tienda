@@ -234,15 +234,17 @@ export const recomendaciones = {
 
 /* ====================== ms-notificaciones :8088 ====================== */
 export const notificaciones = {
+  /* Con el ID token: en el gateway estas tres rutas tienen el authorizer de
+     Cognito, y sin token responden 401 (la campana quedaba siempre vacía). */
   listar: (usuarioId: string) =>
-    pedir<Notificacion[]>(`${API.notificaciones}/api/notificaciones?usuarioId=${enc(usuarioId)}`),
+    pedir<Notificacion[]>(`${API.notificaciones}/api/notificaciones?usuarioId=${enc(usuarioId)}`, conUsuario(usuarioId)),
 
   /* Por query y no por header: EventSource no permite headers propios. */
   urlStream: (usuarioId: string) => `${API.notificaciones}/api/notificaciones/stream?usuarioId=${enc(usuarioId)}`,
 
-  marcarLeida: (id: string) =>
-    pedir<unknown>(`${API.notificaciones}/api/notificaciones/${enc(id)}/leida`, { method: 'PATCH' }),
+  marcarLeida: (id: string, usuarioId: string) =>
+    pedir<unknown>(`${API.notificaciones}/api/notificaciones/${enc(id)}/leida`, conUsuario(usuarioId, { method: 'PATCH' })),
 
   marcarTodas: (usuarioId: string) =>
-    pedir<unknown>(`${API.notificaciones}/api/notificaciones/leidas?usuarioId=${enc(usuarioId)}`, { method: 'POST' }),
+    pedir<unknown>(`${API.notificaciones}/api/notificaciones/leidas?usuarioId=${enc(usuarioId)}`, conUsuario(usuarioId, { method: 'POST' })),
 }

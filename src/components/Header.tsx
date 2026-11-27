@@ -63,7 +63,9 @@ function Campana() {
   const estado =
     estadoStream === 'abierto'
       ? 'en vivo'
-      : estadoStream === 'rendido'
+      : estadoStream === 'sondeo'
+        ? 'al día · se actualiza cada 5 s'
+        : estadoStream === 'rendido'
         ? 'sin conexión'
         : estadoStream === 'reintentando'
           ? 'reconectando…'
@@ -128,7 +130,7 @@ function Campana() {
             </div>
             <div className="notifs__pie">
               <span>
-                <span className={`punto punto--${estadoStream === 'abierto' ? 'ok' : estadoStream === 'rendido' ? 'bad' : 'warn'}`} style={{ display: 'inline-block', marginRight: 6 }} />
+                <span className={`punto punto--${estadoStream === 'abierto' || estadoStream === 'sondeo' ? 'ok' : estadoStream === 'rendido' ? 'bad' : 'warn'}`} style={{ display: 'inline-block', marginRight: 6 }} />
                 {estado}
               </span>
               {estadoStream === 'rendido' && (
