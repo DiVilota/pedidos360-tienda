@@ -12,6 +12,14 @@ del ramo: **3.x = Evaluación 3**, igual que el backend.
 
 ### Añadido
 
+- La tienda también se sirve por la **URL de invocación de la etapa del API Gateway**
+  (`https://<api>.execute-api.<region>.amazonaws.com/desarrollo/`, script `20` del backend). Vive
+  bajo `/desarrollo/` y no en la raíz, así que `index.html` calcula la base antes de cargar nada
+  y escribe `<base href>`; Vite compila con `base: './'`, React Router usa esa base como
+  `basename` y las rutas absolutas del código (imágenes, mapa de ruta, vuelta de Microsoft) pasan
+  por `conBase()` (`src/lib/base.ts`). En nginx (`:8091`, `:8443`) la base es `/` y nada cambia:
+  es la misma imagen.
+
 - Inicio de sesión con **Microsoft Azure Entra ID** (MSAL.js, popup) junto al de Cognito, en
   la pestaña «Ya tengo cuenta». App registrada como SPA en el directorio de Duoc UC
   (`src/lib/msalConfig.ts`); al entrar se traslada el carrito anónimo igual que con Cognito.

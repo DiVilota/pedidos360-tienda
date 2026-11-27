@@ -5,12 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="dark" />
     <meta name="theme-color" content="#0b1220" />
-    <link rel="icon" type="image/svg+xml" href="/logo-pedidos360.svg" />
+    <!-- Base de la tienda (ver src/lib/base.ts). Detrás del API Gateway la
+         página vive en /<etapa>/ (p. ej. /desarrollo/), no en la raíz: este
+         script la calcula y escribe <base href> ANTES de que se pida ningún
+         recurso, así los assets y config.js (rutas relativas, vite base './')
+         salen de la etapa. En nginx (:8091) la base es "/" y nada cambia.
+         Si se abre la etapa sin barra final (/desarrollo), se agrega: sin ella
+         el navegador resolvería los relativos contra la raíz del gateway. -->
+    <script>
+      (function () {
+        var base = '/'
+        if (/\.execute-api\.[a-z0-9-]+\.amazonaws\.com$/.test(location.hostname)) {
+          var etapa = location.pathname.split('/')[1]
+          if (etapa) {
+            base = '/' + etapa + '/'
+            if (location.pathname === '/' + etapa) {
+              location.replace(base + location.search + location.hash)
+            }
+          }
+        }
+        window.PEDIDOS360_BASE = base
+        document.write('<base href="' + base + '">')
+      })()
+    </script>
+    <link rel="icon" type="image/svg+xml" href="logo-pedidos360.svg" />
     <title>Pedidos360 · Tienda de electrónica</title>
     <!-- config.js lo genera docker-entrypoint.sh en cada arranque con las URL
          del entorno. Se carga ANTES del bundle para que las URL ya existan
          cuando React monta. En `npm run dev` se sirve el de public/. -->
-    <script src="/config.js"></script>
+    <script src="config.js"></script>
   </head>
   <body>
     <div id="root"></div>

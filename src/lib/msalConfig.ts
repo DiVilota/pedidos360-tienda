@@ -12,6 +12,7 @@
    ------------------------------------------------------------------------- */
 
 import { PublicClientApplication, type Configuration, LogLevel } from '@azure/msal-browser'
+import { BASE } from './base'
 
 const cfg = (typeof window !== 'undefined' && window.PEDIDOS360_CONFIG) || {} as Record<string, string | undefined>
 
@@ -22,8 +23,11 @@ const msalConfig: Configuration = {
   auth: {
     clientId: CLIENT_ID,
     authority: `https://login.microsoftonline.com/${TENANT_ID}`,
-    redirectUri: window.location.origin,
-    postLogoutRedirectUri: window.location.origin,
+    /* La vuelta del popup tiene que caer en la tienda: en la raíz del origen
+       (nginx :8443) o en la etapa del gateway (…/desarrollo/). Cada una es una
+       redirect URI distinta y hay que registrarla en Azure. */
+    redirectUri: BASE === '/' ? window.location.origin : window.location.origin + BASE,
+    postLogoutRedirectUri: BASE === '/' ? window.location.origin : window.location.origin + BASE,
   },
   cache: {
     cacheLocation: 'localStorage',
