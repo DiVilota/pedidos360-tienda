@@ -41,16 +41,23 @@ const msalConfig: Configuration = {
 
 export const msalInstance = new PublicClientApplication(msalConfig)
 
-/* Limpia cualquier interacción pendiente (popup que no se completó, recarga
-   a mitad de flujo, etc.). Sin esto MSAL lanza "interaction_in_progress" al
-   intentar un login si quedó estado residual en la caché. */
-export const msalReady: Promise<void> = msalInstance.initialize().then(() =>
-  msalInstance.handleRedirectPromise().then(() => {})
-)
-/* MSAL usa crypto.subtle, que el navegador sólo expone en un contexto seguro
-   (HTTPS o localhost). En http://IP:8091 la inicialización falla: el error se
-   muestra al pulsar el botón, no como "Uncaught (in promise)" al cargar. */
-msalReady.catch(() => {})
+/* Inicialización perezosa y una sola vez: limpia cualquier interacción
+   pendiente (popup que no se completó, recarga a mitad de flujo). Sin esto MSAL
+   lanza "interaction_in_progress" si quedó estado residual en la caché.
+
+   Perezosa y no al importar el módulo: dentro del POPUP también se carga la
+   tienda (la redirect URI es el origen), y un handleRedirectPromise() corriendo
+   ahí se come la respuesta de Microsoft (#code=…) antes de que main.tsx se la
+   pase a la ventana principal → "no_token_request_cache_error".
+
+   MSAL usa crypto.subtle, que sólo existe en contexto seguro (HTTPS o
+   localhost): en http://IP:8091 esto rechaza y el error se muestra al pulsar
+   el botón. */
+let listo: Promise<void> | null = null
+export function msalReady(): Promise<void> {
+  listo ??= msalInstance.initialize().then(() => msalInstance.handleRedirectPromise().then(() => {}))
+  return listo
+}
 
 export const loginRequest = {
   scopes: ['openid', 'profile', 'email', 'User.Read'],
