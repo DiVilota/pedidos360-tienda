@@ -144,3 +144,33 @@ describe('crear cuenta', () => {
     expect(r.ok === false && r.error).toMatch(/10 caracteres/)
   })
 })
+
+describe('sesión de Microsoft Azure (MSAL)', () => {
+  beforeEach(() => localStorage.clear())
+
+  /* La guarda iniciarSesionAzure() tras el popup; acá se escribe a mano para
+     probar cómo la lee el resto de la tienda sin abrir un popup real. */
+  const sesionAzure = { email: 'di.villota@duocuc.cl', nombre: 'Diego', rol: 'cliente', proveedor: 'azure' }
+
+  it('se reconoce aunque no traiga tokens de Cognito', () => {
+    localStorage.setItem('p360.sesion', JSON.stringify(sesionAzure))
+    expect(sesionActual()).toEqual(sesionAzure)
+    expect(usuarioIdActual()).toBe('di.villota@duocuc.cl')
+  })
+
+  it('no manda Authorization: el gateway sólo acepta tokens del user pool', () => {
+    localStorage.setItem('p360.sesion', JSON.stringify(sesionAzure))
+    expect(tokenActual()).toBeNull()
+  })
+
+  it('cerrar sesión la borra', () => {
+    localStorage.setItem('p360.sesion', JSON.stringify(sesionAzure))
+    cerrarSesion()
+    expect(sesionActual()).toBeNull()
+  })
+
+  it('una sesión de Cognito sin tokens no vale', () => {
+    localStorage.setItem('p360.sesion', JSON.stringify({ ...sesionAzure, proveedor: 'cognito' }))
+    expect(sesionActual()).toBeNull()
+  })
+})

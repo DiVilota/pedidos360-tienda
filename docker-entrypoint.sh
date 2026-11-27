@@ -48,4 +48,28 @@ EOF
 echo "[entrypoint] config.js generado:"
 sed 's/^/[entrypoint]   /' "$DESTINO"
 
+# HTTPS opcional (login con Microsoft Azure Entra ID). Azure sólo acepta
+# redirect URIs HTTPS fuera de localhost, así que si el contenedor recibe un
+# certificado montado en /etc/nginx/ssl se agrega un server en 443 que es una
+# copia EXACTA del de 80 (mismas rutas y cabeceras de caché) con TLS. Sin
+# certificado (desarrollo local) la tienda queda sólo en 80, como siempre.
+SSL_DIR=/etc/nginx/ssl
+HTTPS_CONF=/etc/nginx/conf.d/https.conf
+if [ -s "$SSL_DIR/tienda.crt" ] && [ -s "$SSL_DIR/tienda.key" ]; then
+  awk -v dir="$SSL_DIR" '
+    /^[[:space:]]*listen 80;/ {
+      print "    listen 443 ssl;"
+      print "    ssl_certificate     " dir "/tienda.crt;"
+      print "    ssl_certificate_key " dir "/tienda.key;"
+      print "    ssl_protocols       TLSv1.2 TLSv1.3;"
+      next
+    }
+    { print }
+  ' /etc/nginx/conf.d/default.conf > "$HTTPS_CONF"
+  echo "[entrypoint] HTTPS habilitado en 443 con $SSL_DIR/tienda.crt"
+else
+  rm -f "$HTTPS_CONF"
+  echo "[entrypoint] sin certificado en $SSL_DIR: sólo HTTP en 80"
+fi
+
 exec nginx -g 'daemon off;'

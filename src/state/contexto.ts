@@ -24,6 +24,7 @@ export type Tienda = {
   usuarioId: string
   ingresar: (email: string, clave: string) => Promise<{ ok: true; sesion: Sesion } | { ok: false; error: string }>
   registrarse: (email: string, clave: string, nombre: string) => Promise<{ ok: true; sesion: Sesion } | { ok: false; error: string }>
+  ingresarConAzure: () => Promise<{ ok: true; sesion: Sesion } | { ok: false; error: string }>
   salir: () => void
 
   /* catálogo completo en memoria: deseos, populares, hero y nombres */

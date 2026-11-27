@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { useNotificaciones } from '../hooks/useNotificaciones'
 import { useSalud } from '../hooks/useSalud'
 import { ApiError, carrito as apiCarrito, productos as apiProductos } from '../lib/api'
-import { cerrarSesion, crearCuenta, iniciarSesion, idAnonimo, sesionActual, usuarioIdActual, type Sesion } from '../lib/auth'
+import { cerrarSesion, crearCuenta, iniciarSesion, iniciarSesionAzure, idAnonimo, sesionActual, usuarioIdActual, type Sesion } from '../lib/auth'
 import { alternar, guardarDeseos, leerDeseos } from '../lib/deseos'
 import { borrarSenales, leerSenales, registrarSenal, type Senal } from '../lib/senales'
 import type { Carrito, Categoria, Producto } from '../lib/types'
@@ -184,6 +184,20 @@ export function TiendaProvider({ children }: { children: ReactNode }) {
     },
     [ingresar],
   )
+  const ingresarConAzure = useCallback(async () => {
+    const r = await iniciarSesionAzure()
+    if (!r.ok) return r
+    const anonimo = idAnonimo()
+    try {
+      const previo = await apiCarrito.obtener(anonimo)
+      if (previo.items.length > 0) {
+        for (const it of previo.items) await apiCarrito.agregar(r.sesion.email, it.productoId, it.cantidad)
+        await apiCarrito.vaciar(anonimo)
+      }
+    } catch { /* si falla el traslado, no bloquea el login */ }
+    setSesion(r.sesion)
+    return r
+  }, [])
 
   /* ----------------------------- deseos ----------------------------- */
   const alternarDeseo = useCallback((id: string) => {
@@ -212,6 +226,7 @@ export function TiendaProvider({ children }: { children: ReactNode }) {
     usuarioId,
     ingresar,
     registrarse,
+    ingresarConAzure,
     salir,
     catalogo,
     categorias,
