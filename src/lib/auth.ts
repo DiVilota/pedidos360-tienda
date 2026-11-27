@@ -18,7 +18,7 @@
    Anónimo  → "anon-<uuid>" generado una vez y guardado en este navegador.
    ------------------------------------------------------------------------- */
 
-import { msalInstance, loginRequest } from './msalConfig'
+import { msalInstance, msalReady, loginRequest } from './msalConfig'
 import type { AccountInfo, AuthenticationResult } from '@azure/msal-browser'
 
 export type Rol = 'cliente' | 'admin'
@@ -115,7 +115,7 @@ function azureAccountToSesion(account: AccountInfo): Sesion {
 /** Inicia el flujo de login con Microsoft (popup). */
 export async function iniciarSesionAzure(): Promise<ResultadoLogin> {
   try {
-    await msalInstance.initialize()
+    await msalReady
     const response: AuthenticationResult = await msalInstance.loginPopup(loginRequest)
     if (!response.account) {
       return { ok: false, error: 'No se pudo obtener la cuenta de Microsoft.' }
@@ -138,7 +138,7 @@ export async function iniciarSesionAzure(): Promise<ResultadoLogin> {
 /** Restaura la sesión de Azure si hay una cuenta activa en la caché de MSAL. */
 export async function restaurarSesionAzure(): Promise<Sesion | null> {
   try {
-    await msalInstance.initialize()
+    await msalReady
     const accounts = msalInstance.getAllAccounts()
     if (accounts.length > 0) {
       msalInstance.setActiveAccount(accounts[0])
@@ -156,7 +156,7 @@ export function cerrarSesion(): void {
     localStorage.removeItem(CLAVE_SESION)
   } catch { /* nada que limpiar */ }
   if (sesion?.proveedor === 'azure') {
-    msalInstance.initialize().then(() => {
+    msalReady.then(() => {
       const account = msalInstance.getActiveAccount()
       if (account) {
         msalInstance.logoutPopup({ account, mainWindowRedirectUri: window.location.origin })

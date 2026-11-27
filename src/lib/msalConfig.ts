@@ -41,6 +41,13 @@ const msalConfig: Configuration = {
 
 export const msalInstance = new PublicClientApplication(msalConfig)
 
+/* Limpia cualquier interacción pendiente (popup que no se completó, recarga
+   a mitad de flujo, etc.). Sin esto MSAL lanza "interaction_in_progress" al
+   intentar un login si quedó estado residual en la caché. */
+export const msalReady: Promise<void> = msalInstance.initialize().then(() =>
+  msalInstance.handleRedirectPromise().then(() => {})
+)
+
 export const loginRequest = {
   scopes: ['openid', 'profile', 'email', 'User.Read'],
 }
