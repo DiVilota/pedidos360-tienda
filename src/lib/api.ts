@@ -223,6 +223,11 @@ export const pagos = {
       cuerpo && typeof cuerpo === 'object' ? (cuerpo as RespuestaIniciarPago) : typeof cuerpo === 'string' ? { message: cuerpo } : {}
     return { status: res.status, body }
   },
+
+  /* SÓLO DEMO: borra todos los bloqueos e intentos del antifraude (DELETE
+     /api/alertas de ms-pago). En el gateway va con el authorizer de Cognito. */
+  resetAntifraude: (usuarioId: string) =>
+    pedir<unknown>(`${API.pagos}/api/alertas`, conUsuario(usuarioId, { method: 'DELETE' })),
 }
 
 /* ====================== ms-recomendaciones :8084 ====================== */
