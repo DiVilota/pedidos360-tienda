@@ -34,7 +34,8 @@ COPY --from=build /app/dist /usr/share/nginx/html
 COPY docker-entrypoint.sh /docker-entrypoint-pedidos360.sh
 RUN chmod +x /docker-entrypoint-pedidos360.sh
 
-EXPOSE 80
+# 443 sólo responde si se monta un certificado en /etc/nginx/ssl (ver entrypoint).
+EXPOSE 80 443
 
 HEALTHCHECK --interval=15s --timeout=3s --start-period=5s --retries=3 \
     CMD wget -qO- http://127.0.0.1/salud || exit 1

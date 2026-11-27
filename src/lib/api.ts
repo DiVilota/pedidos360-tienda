@@ -1,4 +1,5 @@
-import { API } from '../config'
+import { API, urlSalud, type Servicio } from '../config'
+import { tokenActual } from './auth'
 import type {
   Carrito,
   Categoria,
@@ -85,11 +86,23 @@ async function pedir<T>(url: string, init: RequestInit = {}): Promise<T> {
 }
 
 /* Identidad mientras no exista Cognito: el contrato la resuelve en el backend
-   con X-Usuario-Id (Component/UsuarioActual), así que acá sólo se adjunta. */
-const conUsuario = (usuarioId: string, init: RequestInit = {}): RequestInit => ({
-  ...init,
-  headers: { ...(init.headers as Record<string, string> | undefined), 'X-Usuario-Id': usuarioId },
-})
+   con X-Usuario-Id (Component/UsuarioActual), así que acá sólo se adjunta.
+   Con Cognito ya integrado se adjunta ADEMÁS el ID token: en las rutas
+   protegidas el API Gateway lo valida y reescribe X-Usuario-Id con el claim
+   `email`, de modo que la cabecera deja de ser falsificable. Se sigue mandando
+   la cabecera porque el anónimo (sin token) también compra y porque los
+   servicios siguen siendo los mismos en local, donde no hay gateway. */
+const conUsuario = (usuarioId: string, init: RequestInit = {}): RequestInit => {
+  const token = tokenActual()
+  return {
+    ...init,
+    headers: {
+      ...(init.headers as Record<string, string> | undefined),
+      'X-Usuario-Id': usuarioId,
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  }
+}
 
 const cuerpoJson = (metodo: string, body: unknown): RequestInit => ({
   method: metodo,
@@ -100,8 +113,10 @@ const cuerpoJson = (metodo: string, body: unknown): RequestInit => ({
 const enc = encodeURIComponent
 
 /* ========================= salud (los cinco) ========================= */
-export const salud = (base: string) =>
-  pedir<EstadoActuator>(`${base}/actuator/health`, { signal: AbortSignal.timeout(3000) })
+/* La URL la decide config.ts: con una sola base (API Gateway) /actuator/health
+   no distingue servicios y hay que pedir /salud/<servicio>. */
+export const salud = (servicio: Servicio) =>
+  pedir<EstadoActuator>(urlSalud(servicio), { signal: AbortSignal.timeout(3000) })
 
 /* ========================= ms-productos :8086 ========================= */
 export type FiltroCatalogo = { categoria?: string; q?: string; orden?: OrdenCatalogo }
@@ -124,11 +139,15 @@ export const productos = {
   detalle: (id: string, usuarioId: string) =>
     pedir<Producto>(`${API.productos}/api/productos/${enc(id)}`, conUsuario(usuarioId)),
 
-  stockAdmin: () => pedir<StockAdmin[]>(`${API.productos}/api/productos/admin/stock`),
+  /* El panel admin de la tienda manda el ID token: estas dos rutas van
+     protegidas con el authorizer de Cognito en el gateway, y sin token
+     responderían 401. El usuarioId que viaja es el del admin en sesión. */
+  stockAdmin: (usuarioId: string) =>
+    pedir<StockAdmin[]>(`${API.productos}/api/productos/admin/stock`, conUsuario(usuarioId)),
 
   /** Reponer: suma `cantidad` unidades al inventario. */
-  reponer: (id: string, cantidad: number) =>
-    pedir<Producto>(`${API.productos}/api/productos/${enc(id)}/stock`, cuerpoJson('PUT', { cantidad })),
+  reponer: (id: string, cantidad: number, usuarioId: string) =>
+    pedir<Producto>(`${API.productos}/api/productos/${enc(id)}/stock`, conUsuario(usuarioId, cuerpoJson('PUT', { cantidad }))),
 }
 
 /* ========================= ms-carrito :8087 ========================= */
@@ -172,8 +191,10 @@ export const pedidos = {
 }
 
 export const adminCarrito = {
-  resumen: () => pedir<ResumenAdmin>(`${API.carrito}/api/admin/resumen`),
-  pedidos: () => pedir<Pedido[]>(`${API.carrito}/api/admin/pedidos`),
+  /* Protegidas con el authorizer de Cognito: el panel manda el ID token del
+     admin en sesión, igual que las dos de ms-productos. */
+  resumen: (usuarioId: string) => pedir<ResumenAdmin>(`${API.carrito}/api/admin/resumen`, conUsuario(usuarioId)),
+  pedidos: (usuarioId: string) => pedir<Pedido[]>(`${API.carrito}/api/admin/pedidos`, conUsuario(usuarioId)),
 }
 
 /* =========================== ms-pago :8083 =========================== */
@@ -184,8 +205,14 @@ export const pagos = {
   async iniciar(peticion: PeticionPago): Promise<{ status: number; body: RespuestaIniciarPago }> {
     let res: Response
     try {
+      /* Con el ID token: esta ruta está protegida por el authorizer de Cognito
+         en el gateway. Era la ÚNICA llamada de la tienda que no pasaba por
+         conUsuario, y sin token el gateway responde 401 sin cabeceras CORS: el
+         navegador descarta la respuesta y el fallo se ve como "el servicio no
+         responde", que manda a buscar un ms-pago caído que está sano.
+         clientId es el usuarioId (contrato §6). */
       res = await fetch(`${API.pagos}/api/pagos/iniciar`, {
-        ...cuerpoJson('POST', peticion),
+        ...conUsuario(peticion.clientId, cuerpoJson('POST', peticion)),
         signal: AbortSignal.timeout(TIMEOUT_MS),
       })
     } catch {
@@ -196,6 +223,11 @@ export const pagos = {
       cuerpo && typeof cuerpo === 'object' ? (cuerpo as RespuestaIniciarPago) : typeof cuerpo === 'string' ? { message: cuerpo } : {}
     return { status: res.status, body }
   },
+
+  /* SÓLO DEMO: borra todos los bloqueos e intentos del antifraude (DELETE
+     /api/alertas de ms-pago). En el gateway va con el authorizer de Cognito. */
+  resetAntifraude: (usuarioId: string) =>
+    pedir<unknown>(`${API.pagos}/api/alertas`, conUsuario(usuarioId, { method: 'DELETE' })),
 }
 
 /* ====================== ms-recomendaciones :8084 ====================== */
@@ -207,15 +239,17 @@ export const recomendaciones = {
 
 /* ====================== ms-notificaciones :8088 ====================== */
 export const notificaciones = {
+  /* Con el ID token: en el gateway estas tres rutas tienen el authorizer de
+     Cognito, y sin token responden 401 (la campana quedaba siempre vacía). */
   listar: (usuarioId: string) =>
-    pedir<Notificacion[]>(`${API.notificaciones}/api/notificaciones?usuarioId=${enc(usuarioId)}`),
+    pedir<Notificacion[]>(`${API.notificaciones}/api/notificaciones?usuarioId=${enc(usuarioId)}`, conUsuario(usuarioId)),
 
   /* Por query y no por header: EventSource no permite headers propios. */
   urlStream: (usuarioId: string) => `${API.notificaciones}/api/notificaciones/stream?usuarioId=${enc(usuarioId)}`,
 
-  marcarLeida: (id: string) =>
-    pedir<unknown>(`${API.notificaciones}/api/notificaciones/${enc(id)}/leida`, { method: 'PATCH' }),
+  marcarLeida: (id: string, usuarioId: string) =>
+    pedir<unknown>(`${API.notificaciones}/api/notificaciones/${enc(id)}/leida`, conUsuario(usuarioId, { method: 'PATCH' })),
 
   marcarTodas: (usuarioId: string) =>
-    pedir<unknown>(`${API.notificaciones}/api/notificaciones/leidas?usuarioId=${enc(usuarioId)}`, { method: 'POST' }),
+    pedir<unknown>(`${API.notificaciones}/api/notificaciones/leidas?usuarioId=${enc(usuarioId)}`, conUsuario(usuarioId, { method: 'POST' })),
 }

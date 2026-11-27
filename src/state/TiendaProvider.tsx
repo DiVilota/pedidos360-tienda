@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { useNotificaciones } from '../hooks/useNotificaciones'
 import { useSalud } from '../hooks/useSalud'
 import { ApiError, carrito as apiCarrito, productos as apiProductos } from '../lib/api'
-import { cerrarSesion, iniciarSesion, iniciarSesionAzure, idAnonimo, sesionActual, usuarioIdActual, type Sesion } from '../lib/auth'
+import { cerrarSesion, crearCuenta, iniciarSesion, iniciarSesionAzure, idAnonimo, sesionActual, usuarioIdActual, type Sesion } from '../lib/auth'
 import { alternar, guardarDeseos, leerDeseos } from '../lib/deseos'
 import { borrarSenales, leerSenales, registrarSenal, type Senal } from '../lib/senales'
 import type { Carrito, Categoria, Producto } from '../lib/types'
@@ -145,7 +145,7 @@ export function TiendaProvider({ children }: { children: ReactNode }) {
   /* ---------------------------- sesión ---------------------------- */
   const ingresar = useCallback(
     async (email: string, clave: string) => {
-      const r = iniciarSesion(email, clave)
+      const r = await iniciarSesion(email, clave)
       if (!r.ok) return r
       /* El carrito armado como anónimo se traslada a la cuenta: si no, al
          iniciar sesión para pagar el cliente vería su carrito vacío. */
@@ -172,6 +172,18 @@ export function TiendaProvider({ children }: { children: ReactNode }) {
     setDeseosAbierto(false)
   }, [])
 
+  /* Crear cuenta y entrar: el traslado del carrito anónimo es el mismo trabajo
+     que al iniciar sesión, así que se reusa `ingresar` en vez de duplicarlo.
+     Importa de verdad acá: quien se registra suele venir de armar un carrito
+     sin cuenta y, al llegar al checkout, crearla. */
+  const registrarse = useCallback(
+    async (email: string, clave: string, nombre: string) => {
+      const alta = await crearCuenta(email, clave, nombre)
+      if (!alta.ok) return alta
+      return await ingresar(email, clave)
+    },
+    [ingresar],
+  )
   const ingresarConAzure = useCallback(async () => {
     const r = await iniciarSesionAzure()
     if (!r.ok) return r
@@ -213,6 +225,7 @@ export function TiendaProvider({ children }: { children: ReactNode }) {
     sesion,
     usuarioId,
     ingresar,
+    registrarse,
     ingresarConAzure,
     salir,
     catalogo,

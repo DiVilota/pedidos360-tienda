@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { API, SERVICIOS, type Servicio } from '../config'
+import { SERVICIOS, type Servicio } from '../config'
 import { salud as pedirSalud } from '../lib/api'
 import type { EstadoServicio } from '../state/contexto'
 
@@ -17,7 +17,7 @@ const INICIAL = Object.fromEntries(SERVICIOS.map((s) => [s.clave, null])) as Rec
 
 async function sondear(servicio: Servicio): Promise<EstadoServicio> {
   try {
-    const cuerpo = await pedirSalud(API[servicio])
+    const cuerpo = await pedirSalud(servicio)
     return cuerpo.status === 'UP' ? 'arriba' : 'degradado'
   } catch (e) {
     const status = (e as { status?: number }).status

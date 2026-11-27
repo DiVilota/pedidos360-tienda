@@ -1,5 +1,9 @@
 # Pedidos360 · Tienda
 
+> **Documentación de la entrega EV3:** el README principal, con la arquitectura, el despliegue en AWS,
+> los cambios tras la nota 3 y el guion de la demo, está en el backend:
+> [DiVilota/cloud-ev3-kafka (rama `p4-cognito-identidad`)](https://github.com/DiVilota/cloud-ev3-kafka/tree/p4-cognito-identidad).
+
 Frontend de la tienda de electrónica Pedidos360 (DSY1107): catálogo con filtros y
 búsqueda, detalle de producto, «Para ti» con el motivo de cada recomendación,
 carrito con cupones y lista de deseos, checkout con envío o retiro, pago con

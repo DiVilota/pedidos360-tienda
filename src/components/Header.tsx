@@ -63,7 +63,9 @@ function Campana() {
   const estado =
     estadoStream === 'abierto'
       ? 'en vivo'
-      : estadoStream === 'rendido'
+      : estadoStream === 'sondeo'
+        ? 'al día · se actualiza cada 5 s'
+        : estadoStream === 'rendido'
         ? 'sin conexión'
         : estadoStream === 'reintentando'
           ? 'reconectando…'
@@ -128,7 +130,7 @@ function Campana() {
             </div>
             <div className="notifs__pie">
               <span>
-                <span className={`punto punto--${estadoStream === 'abierto' ? 'ok' : estadoStream === 'rendido' ? 'bad' : 'warn'}`} style={{ display: 'inline-block', marginRight: 6 }} />
+                <span className={`punto punto--${estadoStream === 'abierto' || estadoStream === 'sondeo' ? 'ok' : estadoStream === 'rendido' ? 'bad' : 'warn'}`} style={{ display: 'inline-block', marginRight: 6 }} />
                 {estado}
               </span>
               {estadoStream === 'rendido' && (
@@ -273,9 +275,16 @@ export function Header() {
         {sesion ? (
           <MenuCuenta />
         ) : (
-          <Link to="/ingresar" className="btn btn--ghost" style={{ height: 40, fontSize: 13 }}>
-            Ingresar
-          </Link>
+          /* Dos accesos, no uno: con solo "Ingresar", quien no tiene cuenta no
+             sabe que puede crearla y abandona en la puerta. */
+          <div style={{ display: 'flex', gap: 8 }}>
+            <Link to="/ingresar" className="btn btn--ghost" style={{ height: 40, fontSize: 13 }}>
+              Ingresar
+            </Link>
+            <Link to="/ingresar?modo=crear" className="btn btn--primario" style={{ height: 40, fontSize: 13 }}>
+              Crear cuenta
+            </Link>
+          </div>
         )}
       </div>
     </header>

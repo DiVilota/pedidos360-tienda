@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { IconoCategoria } from './iconos'
+import { conBase } from '../lib/base'
 
 /* ---------------------------------------------------------------------------
    Imagen de producto. Hoy imagenUrl llega en null (§7.1) y se dibuja un
@@ -26,7 +27,7 @@ export function ImagenProducto({ nombre, categoria, etiquetaCategoria, imagenUrl
   return (
     <div className={clase} role="img" aria-label={usarFoto ? undefined : `${nombre} (imagen ilustrativa)`}>
       {usarFoto ? (
-        <img src={imagenUrl} alt={nombre} loading="lazy" onError={() => setFallo(true)} />
+        <img src={conBase(imagenUrl)} alt={nombre} loading="lazy" onError={() => setFallo(true)} />
       ) : (
         <>
           <IconoCategoria slug={categoria} />

@@ -9,6 +9,10 @@ import react from '@vitejs/plugin-react'
    strictPort evita que Vite se corra en silencio a 5175 si el puerto está
    ocupado: ahí todo fallaría por CORS con los servicios "sanos". */
 export default defineConfig({
+  /* base relativa: los assets se resuelven contra el <base href> que pone
+     index.html, así la misma build sirve en la raíz de nginx y bajo la etapa
+     del API Gateway (/desarrollo/). Ver src/lib/base.ts. */
+  base: './',
   plugins: [react()],
   server: { port: 5174, strictPort: true },
   preview: { port: 5174, strictPort: true },

@@ -13,6 +13,15 @@
 #   API_RECOMENDACIONES  http://localhost:8084
 #   API_NOTIFICACIONES   http://localhost:8088
 #
+# Identidad (Cognito User Pools), sin valor por defecto:
+#   COGNITO_REGION       us-east-1
+#   COGNITO_CLIENT_ID    id del app client de la tienda (sin secreto)
+#   COGNITO_POOL_ID      sólo informativo, para saber contra qué pool se mira
+# Sin COGNITO_CLIENT_ID la tienda arranca y el catálogo se navega igual; lo que
+# no se puede es iniciar sesión, y la pantalla de ingreso lo dice. El pool del
+# Learner Lab se recrea cuando caduca el lab, y por eso esto es configuración
+# de arranque y no algo compilado dentro del bundle.
+#
 # En AWS, con API Gateway delante, todas pueden apuntar a la misma base y se
 # diferencian por la ruta del recurso, por ejemplo:
 #   API_PAGOS=https://abc123.execute-api.us-east-1.amazonaws.com/desarrollo
@@ -29,11 +38,38 @@ window.PEDIDOS360_CONFIG = {
   carrito:         "${API_CARRITO:-http://localhost:8087}",
   pagos:           "${API_PAGOS:-http://localhost:8083}",
   recomendaciones: "${API_RECOMENDACIONES:-http://localhost:8084}",
-  notificaciones:  "${API_NOTIFICACIONES:-http://localhost:8088}"
+  notificaciones:  "${API_NOTIFICACIONES:-http://localhost:8088}",
+  cognitoRegion:   "${COGNITO_REGION:-us-east-1}",
+  cognitoClientId: "${COGNITO_CLIENT_ID:-}",
+  cognitoPoolId:   "${COGNITO_POOL_ID:-}"
 };
 EOF
 
 echo "[entrypoint] config.js generado:"
 sed 's/^/[entrypoint]   /' "$DESTINO"
+
+# HTTPS opcional (login con Microsoft Azure Entra ID). Azure sólo acepta
+# redirect URIs HTTPS fuera de localhost, así que si el contenedor recibe un
+# certificado montado en /etc/nginx/ssl se agrega un server en 443 que es una
+# copia EXACTA del de 80 (mismas rutas y cabeceras de caché) con TLS. Sin
+# certificado (desarrollo local) la tienda queda sólo en 80, como siempre.
+SSL_DIR=/etc/nginx/ssl
+HTTPS_CONF=/etc/nginx/conf.d/https.conf
+if [ -s "$SSL_DIR/tienda.crt" ] && [ -s "$SSL_DIR/tienda.key" ]; then
+  awk -v dir="$SSL_DIR" '
+    /^[[:space:]]*listen 80;/ {
+      print "    listen 443 ssl;"
+      print "    ssl_certificate     " dir "/tienda.crt;"
+      print "    ssl_certificate_key " dir "/tienda.key;"
+      print "    ssl_protocols       TLSv1.2 TLSv1.3;"
+      next
+    }
+    { print }
+  ' /etc/nginx/conf.d/default.conf > "$HTTPS_CONF"
+  echo "[entrypoint] HTTPS habilitado en 443 con $SSL_DIR/tienda.crt"
+else
+  rm -f "$HTTPS_CONF"
+  echo "[entrypoint] sin certificado en $SSL_DIR: sólo HTTP en 80"
+fi
 
 exec nginx -g 'daemon off;'

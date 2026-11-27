@@ -1,3 +1,4 @@
+import { conBase } from './base'
 import type { EstadoPedido, MetodoEnvio, Pedido } from './types'
 
 /* ---------------------------------------------------------------------------
@@ -78,7 +79,7 @@ export function tieneRuta(p: Pick<Pedido, 'estado' | 'metodoEnvio'>): boolean {
 export function urlRuta(p: Pick<Pedido, 'id' | 'estado' | 'metodoEnvio' | 'destino'>): string {
   const stage = Math.max(0, indiceEtapa(p))
   const q = new URLSearchParams({ id: p.id, stage: String(stage), dest: p.destino ?? '' })
-  return `/ruta-paquete.html?${q.toString()}`
+  return conBase(`/ruta-paquete.html?${q.toString()}`)
 }
 
 /** Fecha del último cambio de estado (o la de creación si no hay historial). */

@@ -16,9 +16,16 @@ import type { EstadoStream } from '../state/contexto'
    nativa reintenta cada ~3 s para siempre, desde cada navegador abierto, y eso
    golpea a un servicio que justo está caído. Tras 5 fallos se deja de
    intentar y la campana ofrece "reintentar".
+
+   Respaldo por SONDEO: el API Gateway REST no transmite SSE (junta la
+   respuesta completa y corta a los 29 s), y la ruta /stream ni siquiera está
+   publicada ahí: cae en el proxy de la tienda y devuelve HTML. Mientras el
+   stream no esté abierto se relee el listado cada SONDEO_MS; lo nuevo y no
+   leído dispara eventoTick igual que un evento SSE (toast, "Mis pedidos").
    ------------------------------------------------------------------------- */
 
 const LIMITE = 50
+const SONDEO_MS = 5000
 
 function parsear(datos: string): Notificacion | null {
   try {
@@ -36,11 +43,17 @@ export function useNotificaciones(usuarioId: string) {
   const [intento, setIntento] = useState(0)
 
   const fallos = useRef(0)
+  /* ids ya vistos: null hasta la primera carga, para no avisar de lo viejo */
+  const conocidas = useRef<Set<string> | null>(null)
 
   const cargar = useCallback(async () => {
     try {
       const l = await api.listar(usuarioId)
-      setLista(Array.isArray(l) ? l.slice(0, LIMITE) : [])
+      const nuevas = Array.isArray(l) ? l.slice(0, LIMITE) : []
+      const previas = conocidas.current
+      if (previas && nuevas.some((n) => !n.leida && !previas.has(n.id))) setEventoTick((t) => t + 1)
+      conocidas.current = new Set(nuevas.map((n) => n.id))
+      setLista(nuevas)
     } catch {
       /* sin servicio la campana queda vacía; la insignia de salud ya lo dice */
     }
@@ -48,11 +61,22 @@ export function useNotificaciones(usuarioId: string) {
 
   useEffect(() => {
     setLista([])
+    conocidas.current = null
     void cargar()
   }, [cargar])
 
   useEffect(() => {
-    if (typeof EventSource === 'undefined') return
+    if (estado === 'abierto') return
+    const t = setInterval(() => void cargar(), SONDEO_MS)
+    return () => clearInterval(t)
+  }, [estado, cargar])
+
+  useEffect(() => {
+    /* Por el gateway no hay SSE posible: se va directo al sondeo. */
+    if (typeof EventSource === 'undefined' || api.urlStream(usuarioId).includes('.execute-api.')) {
+      setEstado('sondeo')
+      return
+    }
     let es: EventSource | null = null
     let timer: ReturnType<typeof setTimeout> | undefined
     let cancelado = false
@@ -60,6 +84,7 @@ export function useNotificaciones(usuarioId: string) {
     const recibir = (ev: MessageEvent) => {
       const n = parsear(ev.data)
       if (!n) return
+      conocidas.current?.add(n.id)
       setLista((prev) => [n, ...prev.filter((x) => x.id !== n.id)].slice(0, LIMITE))
       setEventoTick((t) => t + 1)
     }
@@ -102,10 +127,10 @@ export function useNotificaciones(usuarioId: string) {
 
   const marcarLeida = useCallback((id: string) => {
     setLista((prev) => prev.map((n) => (n.id === id ? { ...n, leida: true } : n)))
-    api.marcarLeida(id).catch(() => {
+    api.marcarLeida(id, usuarioId).catch(() => {
       /* si falla, la próxima carga la traerá como no leída: no se miente */
     })
-  }, [])
+  }, [usuarioId])
 
   const marcarTodas = useCallback(() => {
     setLista((prev) => prev.map((n) => ({ ...n, leida: true })))

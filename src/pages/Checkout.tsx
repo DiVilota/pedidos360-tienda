@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { DemoAntifraude } from '../components/DemoAntifraude'
 import { ImagenProducto } from '../components/ImagenProducto'
 import { Aviso, Vacio } from '../components/ui'
 import { ApiError, carrito as apiCarrito, pedidos as apiPedidos } from '../lib/api'
@@ -479,6 +480,7 @@ export function Checkout() {
                     </p>
                   </div>
                 )}
+                <DemoAntifraude usuarioId={usuarioId} tarjeta={pasarela === 'SIMULADA' ? tarjeta : ''} />
               </div>
             </>
           )}

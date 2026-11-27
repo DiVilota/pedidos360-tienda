@@ -1,0 +1,122 @@
+[
+ {
+  "id": "item_105",
+  "nombre": "MacBook Air M2",
+  "categoria": "laptops",
+  "subcategoria": "ultraliviana"
+ },
+ {
+  "id": "item_110",
+  "nombre": "PlayStation 5",
+  "categoria": "gaming",
+  "subcategoria": "consolas"
+ },
+ {
+  "id": "item_102",
+  "nombre": "iPhone 15",
+  "categoria": "celulares",
+  "subcategoria": "gama-alta"
+ },
+ {
+  "id": "item_107",
+  "nombre": "WH-1000XM5",
+  "categoria": "audio",
+  "subcategoria": "audifonos"
+ },
+ {
+  "id": "item_111",
+  "nombre": "Switch OLED",
+  "categoria": "gaming",
+  "subcategoria": "consolas"
+ },
+ {
+  "id": "item_119",
+  "nombre": "Alpha a6400",
+  "categoria": "camaras",
+  "subcategoria": "mirrorless"
+ },
+ {
+  "id": "item_101",
+  "nombre": "Galaxy S24",
+  "categoria": "celulares",
+  "subcategoria": "gama-alta"
+ },
+ {
+  "id": "item_108",
+  "nombre": "AirPods Pro 2",
+  "categoria": "audio",
+  "subcategoria": "audifonos"
+ },
+ {
+  "id": "item_117",
+  "nombre": "Cargador GaN 65 W",
+  "categoria": "accesorios",
+  "subcategoria": "carga"
+ },
+ {
+  "id": "item_120",
+  "nombre": "HERO12 Black",
+  "categoria": "camaras",
+  "subcategoria": "accion"
+ },
+ {
+  "id": "item_104",
+  "nombre": "ZenBook 14",
+  "categoria": "laptops",
+  "subcategoria": "ultraliviana"
+ },
+ {
+  "id": "item_109",
+  "nombre": "Flip 6",
+  "categoria": "audio",
+  "subcategoria": "parlantes"
+ },
+ {
+  "id": "item_112",
+  "nombre": "DualSense",
+  "categoria": "gaming",
+  "subcategoria": "controles"
+ },
+ {
+  "id": "item_113",
+  "nombre": "Bravia 55\" 4K",
+  "categoria": "tv-video",
+  "subcategoria": "televisores"
+ },
+ {
+  "id": "item_115",
+  "nombre": "Echo Dot 5",
+  "categoria": "smart-home",
+  "subcategoria": "asistentes"
+ },
+ {
+  "id": "item_103",
+  "nombre": "Moto G84",
+  "categoria": "celulares",
+  "subcategoria": "gama-media"
+ },
+ {
+  "id": "item_114",
+  "nombre": "Fire TV Stick 4K",
+  "categoria": "tv-video",
+  "subcategoria": "streaming"
+ },
+ {
+  "id": "item_116",
+  "nombre": "Hue White & Color",
+  "categoria": "smart-home",
+  "subcategoria": "iluminacion"
+ },
+ {
+  "id": "item_106",
+  "nombre": "IdeaPad Slim 3",
+  "categoria": "laptops",
+  "subcategoria": "uso-diario"
+ },
+ {
+  "id": "item_118",
+  "nombre": "Funda MagSafe iPhone 15",
+  "categoria": "accesorios",
+  "subcategoria": "fundas"
+ }
+]

@@ -12,6 +12,26 @@ del ramo: **3.x = Evaluación 3**, igual que el backend.
 
 ### Añadido
 
+- La tienda también se sirve por la **URL de invocación de la etapa del API Gateway**
+  (`https://<api>.execute-api.<region>.amazonaws.com/desarrollo/`, script `20` del backend). Vive
+  bajo `/desarrollo/` y no en la raíz, así que `index.html` calcula la base antes de cargar nada
+  y escribe `<base href>`; Vite compila con `base: './'`, React Router usa esa base como
+  `basename` y las rutas absolutas del código (imágenes, mapa de ruta, vuelta de Microsoft) pasan
+  por `conBase()` (`src/lib/base.ts`). En nginx (`:8091`, `:8443`) la base es `/` y nada cambia:
+  es la misma imagen.
+
+- Inicio de sesión con **Microsoft Azure Entra ID** (MSAL.js, popup) junto al de Cognito, en
+  la pestaña «Ya tengo cuenta». App registrada como SPA en el directorio de Duoc UC
+  (`src/lib/msalConfig.ts`); al entrar se traslada el carrito anónimo igual que con Cognito.
+
+  Límite conocido: la sesión de Azure no trae ID token del user pool y el authorizer del API
+  Gateway sólo acepta esos, así que con Microsoft se navega, se arma el carrito y se reciben
+  recomendaciones, pero pago, pedidos y notificaciones piden una cuenta de Cognito. Federar
+  Entra ID como proveedor del user pool es la forma de cerrarlo.
+- HTTPS opcional en el contenedor: si se monta un certificado en `/etc/nginx/ssl`
+  (`tienda.crt` + `tienda.key`), el entrypoint agrega un server en 443 copiado del de 80. Azure
+  exige redirect URIs HTTPS fuera de localhost y MSAL necesita un contexto seguro; en AWS se
+  publica como `https://<IP>:8443` con un certificado autofirmado.
 - Imágenes de catálogo: un SVG ilustrativo por producto en `public/img/<id>.svg`, con la
   silueta del tipo de producto y el color de acento de su categoría. Reemplazan al placeholder
   de inicial en las tarjetas; `ImagenProducto` no cambió, porque ya mostraba la foto cuando
@@ -25,6 +45,13 @@ del ramo: **3.x = Evaluación 3**, igual que el backend.
   - El lienzo es de 800×600 (4/3, igual que `.ph`) con el dibujo contenido en el cuadrado
     central x∈[100,700]. Así el `object-fit: cover` de `.ph--mini`, que recorta a 1/1, tampoco
     corta el dibujo. Un SVG cuadrado se ve recortado en las tarjetas.
+
+### Corregido
+
+- La tienda en `http://IP:8091` quedaba **en blanco**: en MSAL v5 el constructor de
+  `PublicClientApplication` ya exige `crypto.subtle`, que en HTTP no existe, y al crearse al
+  importar el módulo lanzaba `crypto_nonexistent` antes de que React montara. Ahora la instancia
+  se crea al usarla (`msal()`) y el error sale sólo al pulsar «Ingresar con Microsoft».
 
 ## [3.0.0-rc.1] — 2026-11-22
 
