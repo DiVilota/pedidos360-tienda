@@ -19,15 +19,17 @@ const cfg = (typeof window !== 'undefined' && window.PEDIDOS360_CONFIG) || {} as
 const CLIENT_ID = (cfg as Record<string, string | undefined>).azureClientId || 'aa1acc08-c8f7-47ed-bf62-dda7db86750d'
 const TENANT_ID = (cfg as Record<string, string | undefined>).azureTenantId || 'd4b6dc23-c077-4371-8909-a5508bbbf0f4'
 
+/* La vuelta del popup tiene que caer en la tienda: en la raíz del origen
+   (nginx :8443) o en la etapa del gateway (…/desarrollo/). Cada una es una
+   redirect URI distinta y hay que registrarla en Azure. */
+export const REDIRECT_URI = BASE === '/' ? window.location.origin : window.location.origin + BASE
+
 const msalConfig: Configuration = {
   auth: {
     clientId: CLIENT_ID,
     authority: `https://login.microsoftonline.com/${TENANT_ID}`,
-    /* La vuelta del popup tiene que caer en la tienda: en la raíz del origen
-       (nginx :8443) o en la etapa del gateway (…/desarrollo/). Cada una es una
-       redirect URI distinta y hay que registrarla en Azure. */
-    redirectUri: BASE === '/' ? window.location.origin : window.location.origin + BASE,
-    postLogoutRedirectUri: BASE === '/' ? window.location.origin : window.location.origin + BASE,
+    redirectUri: REDIRECT_URI,
+    postLogoutRedirectUri: REDIRECT_URI,
   },
   cache: {
     cacheLocation: 'localStorage',
@@ -43,7 +45,15 @@ const msalConfig: Configuration = {
   },
 }
 
-export const msalInstance = new PublicClientApplication(msalConfig)
+/* La instancia también se crea perezosamente. En MSAL v5 el CONSTRUCTOR ya
+   exige crypto.subtle: creada al importar el módulo, en http://IP:8091 lanzaba
+   "crypto_nonexistent" antes de que React montara y la tienda entera quedaba
+   en blanco, no sólo el botón de Microsoft. */
+let instancia: PublicClientApplication | null = null
+export function msal(): PublicClientApplication {
+  instancia ??= new PublicClientApplication(msalConfig)
+  return instancia
+}
 
 /* Inicialización perezosa y una sola vez: limpia cualquier interacción
    pendiente (popup que no se completó, recarga a mitad de flujo). Sin esto MSAL
@@ -59,7 +69,12 @@ export const msalInstance = new PublicClientApplication(msalConfig)
    el botón. */
 let listo: Promise<void> | null = null
 export function msalReady(): Promise<void> {
-  listo ??= msalInstance.initialize().then(() => msalInstance.handleRedirectPromise().then(() => {}))
+  /* Promise.resolve().then: si el constructor lanza, queda como rechazo de
+     esta promesa (lo atrapa quien llama) y no como excepción al cargar. */
+  listo ??= Promise.resolve()
+    .then(() => msal().initialize())
+    .then(() => msal().handleRedirectPromise())
+    .then(() => {})
   return listo
 }
 

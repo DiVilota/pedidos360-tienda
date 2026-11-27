@@ -32,7 +32,7 @@
    ------------------------------------------------------------------------- */
 import { autenticar, claimsDe, ErrorCognito, refrescar, registrar, vencido, type Tokens } from './cognito'
 
-import { msalInstance, msalReady, loginRequest } from './msalConfig'
+import { msal, msalReady, loginRequest, REDIRECT_URI } from './msalConfig'
 import type { AccountInfo, AuthenticationResult } from '@azure/msal-browser'
 
 export type Rol = 'cliente' | 'admin'
@@ -206,11 +206,11 @@ function azureAccountToSesion(account: AccountInfo): Sesion {
 export async function iniciarSesionAzure(): Promise<ResultadoLogin> {
   try {
     await msalReady()
-    const response: AuthenticationResult = await msalInstance.loginPopup(loginRequest)
+    const response: AuthenticationResult = await msal().loginPopup(loginRequest)
     if (!response.account) {
       return { ok: false, error: 'No se pudo obtener la cuenta de Microsoft.' }
     }
-    msalInstance.setActiveAccount(response.account)
+    msal().setActiveAccount(response.account)
     const sesion = azureAccountToSesion(response.account)
     guardar(sesion)
     return { ok: true, sesion }
@@ -227,9 +227,9 @@ export async function iniciarSesionAzure(): Promise<ResultadoLogin> {
 export async function restaurarSesionAzure(): Promise<Sesion | null> {
   try {
     await msalReady()
-    const accounts = msalInstance.getAllAccounts()
+    const accounts = msal().getAllAccounts()
     if (accounts.length > 0) {
-      msalInstance.setActiveAccount(accounts[0])
+      msal().setActiveAccount(accounts[0])
       return azureAccountToSesion(accounts[0])
     }
   } catch { /* MSAL no inicializado o sin cuentas */ }
@@ -247,9 +247,9 @@ export function cerrarSesion(): void {
   } catch { /* nada que limpiar */ }
   if (sesion?.proveedor === 'azure') {
     msalReady().then(() => {
-      const account = msalInstance.getActiveAccount()
+      const account = msal().getActiveAccount()
       if (account) {
-        msalInstance.logoutPopup({ account, mainWindowRedirectUri: window.location.origin })
+        msal().logoutPopup({ account, mainWindowRedirectUri: REDIRECT_URI })
           .catch(() => { /* si falla el logout remoto, al menos el local ya se limpió */ })
       }
     }).catch(() => { /* nada */ })

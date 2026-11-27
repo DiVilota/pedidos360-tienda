@@ -46,6 +46,13 @@ del ramo: **3.x = Evaluación 3**, igual que el backend.
     central x∈[100,700]. Así el `object-fit: cover` de `.ph--mini`, que recorta a 1/1, tampoco
     corta el dibujo. Un SVG cuadrado se ve recortado en las tarjetas.
 
+### Corregido
+
+- La tienda en `http://IP:8091` quedaba **en blanco**: en MSAL v5 el constructor de
+  `PublicClientApplication` ya exige `crypto.subtle`, que en HTTP no existe, y al crearse al
+  importar el módulo lanzaba `crypto_nonexistent` antes de que React montara. Ahora la instancia
+  se crea al usarla (`msal()`) y el error sale sólo al pulsar «Ingresar con Microsoft».
+
 ## [3.0.0-rc.1] — 2026-11-22
 
 ### Cambiado
