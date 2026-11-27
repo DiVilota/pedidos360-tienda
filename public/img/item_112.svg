@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="DualSense — ilustración del producto">
+  <defs>
+    <linearGradient id="fondo" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0d1627"/><stop offset="1" stop-color="#131f36"/>
+    </linearGradient>
+    <radialGradient id="halo" cx="50%" cy="42%" r="58%">
+      <stop offset="0" stop-color="#38bdf8" stop-opacity=".16"/>
+      <stop offset="1" stop-color="#38bdf8" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="pantalla" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#16243d"/><stop offset="1" stop-color="#0c1526"/>
+    </linearGradient>
+    <pattern id="malla" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0v40" fill="none" stroke="#2b3a54" stroke-width="1" opacity=".5"/>
+    </pattern>
+  </defs>
+  <rect width="800" height="600" fill="url(#fondo)"/>
+  <rect width="800" height="600" fill="url(#malla)"/>
+  <rect width="800" height="600" fill="url(#halo)"/>
+  <g>
+  <path d="M300 236h200c48 0 86 40 92 96l12 68c6 40-32 62-58 36l-50-50H304l-50 50c-26 26-64 4-58-36l12-68c6-56 44-96 92-96z" fill="#3d4f6d" stroke="#8aa0c0" stroke-width="3"/>
+  <circle cx="330" cy="310" r="24" fill="#0a1322" stroke="#8aa0c0" stroke-width="2"/>
+  <circle cx="470" cy="310" r="24" fill="#0a1322" stroke="#8aa0c0" stroke-width="2"/>
+  <path d="M352 362h26M365 349v26" stroke="#8aa0c0" stroke-width="5" stroke-linecap="round"/>
+  <circle cx="437" cy="356" r="9" fill="#38bdf8" opacity=".85"/>
+  <circle cx="462" cy="376" r="9" fill="#7dd3fc" opacity=".6"/>
+  <rect x="384" y="268" width="32" height="8" rx="4" fill="#38bdf8" opacity=".7"/>
+  </g>
+</svg>

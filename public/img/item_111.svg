@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="Switch OLED — ilustración del producto">
+  <defs>
+    <linearGradient id="fondo" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0d1627"/><stop offset="1" stop-color="#131f36"/>
+    </linearGradient>
+    <radialGradient id="halo" cx="50%" cy="42%" r="58%">
+      <stop offset="0" stop-color="#38bdf8" stop-opacity=".16"/>
+      <stop offset="1" stop-color="#38bdf8" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="pantalla" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#16243d"/><stop offset="1" stop-color="#0c1526"/>
+    </linearGradient>
+    <pattern id="malla" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0v40" fill="none" stroke="#2b3a54" stroke-width="1" opacity=".5"/>
+    </pattern>
+  </defs>
+  <rect width="800" height="600" fill="url(#fondo)"/>
+  <rect width="800" height="600" fill="url(#malla)"/>
+  <rect width="800" height="600" fill="url(#halo)"/>
+  <g>
+  <rect x="300" y="196" width="200" height="208" rx="14" fill="#0a1322" stroke="#8aa0c0" stroke-width="3"/>
+  <rect x="312" y="208" width="176" height="184" rx="8" fill="url(#pantalla)"/>
+  <rect x="236" y="190" width="62" height="220" rx="28" fill="#3d4f6d" stroke="#8aa0c0" stroke-width="3"/>
+  <rect x="502" y="190" width="62" height="220" rx="28" fill="#3d4f6d" stroke="#8aa0c0" stroke-width="3"/>
+  <circle cx="267" cy="246" r="13" fill="#38bdf8" opacity=".8"/>
+  <circle cx="533" cy="246" r="13" fill="#7dd3fc" opacity=".8"/>
+  <path d="M252 322h30M267 307v30" stroke="#8aa0c0" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="533" cy="330" r="12" fill="none" stroke="#8aa0c0" stroke-width="3"/>
+  </g>
+</svg>

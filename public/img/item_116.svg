@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="Hue White &amp; Color — ilustración del producto">
+  <defs>
+    <linearGradient id="fondo" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0d1627"/><stop offset="1" stop-color="#131f36"/>
+    </linearGradient>
+    <radialGradient id="halo" cx="50%" cy="42%" r="58%">
+      <stop offset="0" stop-color="#38bdf8" stop-opacity=".16"/>
+      <stop offset="1" stop-color="#38bdf8" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="pantalla" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#16243d"/><stop offset="1" stop-color="#0c1526"/>
+    </linearGradient>
+    <pattern id="malla" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0v40" fill="none" stroke="#2b3a54" stroke-width="1" opacity=".5"/>
+    </pattern>
+  </defs>
+  <rect width="800" height="600" fill="url(#fondo)"/>
+  <rect width="800" height="600" fill="url(#malla)"/>
+  <rect width="800" height="600" fill="url(#halo)"/>
+  <g>
+  <path d="M400 150c62 0 112 48 112 108 0 44-26 66-38 94-8 18-10 30-10 42H336c0-12-2-24-10-42-12-28-38-50-38-94 0-60 50-108 112-108z" fill="#3d4f6d" stroke="#8aa0c0" stroke-width="3"/>
+  <path d="M400 186c-42 0-76 32-76 72 0 30 16 46 26 64h100c10-18 26-34 26-64 0-40-34-72-76-72z" fill="#38bdf8" opacity=".3"/>
+  <path d="M344 400h112M348 424h104M356 448h88" stroke="#8aa0c0" stroke-width="10" stroke-linecap="round"/>
+  <path d="M400 90v34M300 128l22 26M500 128l-22 26M232 228h32M536 228h32" stroke="#38bdf8" stroke-width="4" stroke-linecap="round" opacity=".55"/>
+  </g>
+</svg>
