@@ -37,6 +37,22 @@ export const API = {
 
 export type Servicio = keyof typeof API
 
+/* URL de salud de un servicio.
+
+   Con un puerto por servicio (desarrollo) es su propio /actuator/health. Pero
+   detrás del API Gateway las cinco bases son LA MISMA, así que
+   `${base}/actuator/health` no distingue de quién es la salud, y además el
+   gateway no publica /actuator (responde 403 sin cabeceras CORS, que el
+   navegador cuenta como fallo de red: la insignia decía "modo demo · sin
+   backend" con los cinco servicios arriba).
+   Por eso, en modo gateway se pide /salud/<servicio>, cinco rutas explícitas
+   que el 14 declara apuntando al /actuator/health de cada puerto. */
+const unaSolaBase = () => new Set(Object.values(API)).size === 1
+
+export function urlSalud(servicio: Servicio): string {
+  return unaSolaBase() ? `${API[servicio]}/salud/${servicio}` : `${API[servicio]}/actuator/health`
+}
+
 /* Identidad (Cognito User Pools). Igual que las URL: no se compila dentro del
    bundle, llega por config.js, porque el user pool del Learner Lab se recrea
    cada vez que caduca el lab y la imagen no debería reconstruirse por eso.

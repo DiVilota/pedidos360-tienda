@@ -1,4 +1,4 @@
-import { API } from '../config'
+import { API, urlSalud, type Servicio } from '../config'
 import { tokenActual } from './auth'
 import type {
   Carrito,
@@ -113,8 +113,10 @@ const cuerpoJson = (metodo: string, body: unknown): RequestInit => ({
 const enc = encodeURIComponent
 
 /* ========================= salud (los cinco) ========================= */
-export const salud = (base: string) =>
-  pedir<EstadoActuator>(`${base}/actuator/health`, { signal: AbortSignal.timeout(3000) })
+/* La URL la decide config.ts: con una sola base (API Gateway) /actuator/health
+   no distingue servicios y hay que pedir /salud/<servicio>. */
+export const salud = (servicio: Servicio) =>
+  pedir<EstadoActuator>(urlSalud(servicio), { signal: AbortSignal.timeout(3000) })
 
 /* ========================= ms-productos :8086 ========================= */
 export type FiltroCatalogo = { categoria?: string; q?: string; orden?: OrdenCatalogo }
