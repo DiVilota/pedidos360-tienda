@@ -205,8 +205,14 @@ export const pagos = {
   async iniciar(peticion: PeticionPago): Promise<{ status: number; body: RespuestaIniciarPago }> {
     let res: Response
     try {
+      /* Con el ID token: esta ruta está protegida por el authorizer de Cognito
+         en el gateway. Era la ÚNICA llamada de la tienda que no pasaba por
+         conUsuario, y sin token el gateway responde 401 sin cabeceras CORS: el
+         navegador descarta la respuesta y el fallo se ve como "el servicio no
+         responde", que manda a buscar un ms-pago caído que está sano.
+         clientId es el usuarioId (contrato §6). */
       res = await fetch(`${API.pagos}/api/pagos/iniciar`, {
-        ...cuerpoJson('POST', peticion),
+        ...conUsuario(peticion.clientId, cuerpoJson('POST', peticion)),
         signal: AbortSignal.timeout(TIMEOUT_MS),
       })
     } catch {
