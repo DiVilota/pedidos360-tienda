@@ -46,6 +46,8 @@ export type DatosCallback = {
   fecha: string | null
   detalle: string | null
   pasarela: 'WEBPAY' | 'SIMULADA'
+  /** ms-pago anuló un cobro de Webpay porque la tarjeta está bloqueada por el antifraude */
+  antifraude: boolean
 }
 
 const vacioANull = (v: string | null) => (v && v.trim() ? v.trim() : null)
@@ -73,6 +75,7 @@ export function leerCallback(params: URLSearchParams): DatosCallback {
     fecha: vacioANull(params.get('fecha')),
     detalle: vacioANull(params.get('detalle')),
     pasarela: (params.get('pasarela') ?? '').toUpperCase() === 'SIMULADA' ? 'SIMULADA' : 'WEBPAY',
+    antifraude: (params.get('motivo') ?? '').toLowerCase() === 'antifraude',
   }
 }
 
@@ -84,7 +87,10 @@ export const TITULO: Record<Resultado, string> = {
   desconocido: 'No encontramos el resultado del pago',
 }
 
-export function bajada(r: Resultado, pasarela: 'WEBPAY' | 'SIMULADA'): string {
+export function bajada(r: Resultado, pasarela: 'WEBPAY' | 'SIMULADA', antifraude = false): string {
+  if (r === 'rechazado' && antifraude) {
+    return 'El sistema antifraude tiene bloqueada esta tarjeta por intentos sospechosos. Anulamos el cobro y el stock reservado se liberó.'
+  }
   const via = pasarela === 'WEBPAY' ? 'Webpay' : 'la pasarela de prueba'
   switch (r) {
     case 'aprobado':

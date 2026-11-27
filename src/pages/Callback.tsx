@@ -95,7 +95,7 @@ export function Callback() {
       <div className="eyebrow">// resultado del pago · {d.pasarela === 'WEBPAY' ? 'webpay plus' : 'pasarela de prueba'}</div>
       <h1 className="h1">{TITULO[d.resultado]}</h1>
       <p className="muted" style={{ fontSize: 15, margin: '10px 0 22px' }}>
-        {bajada(d.resultado, d.pasarela)}
+        {bajada(d.resultado, d.pasarela, d.antifraude)}
       </p>
 
       {(d.orden || d.monto != null) && (
