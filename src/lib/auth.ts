@@ -1,11 +1,16 @@
 /* ---------------------------------------------------------------------------
    Identidad del usuario — ÚNICO módulo que sabe quién está comprando.
 
-   PROVISORIO hasta Cognito (fase 4 del contrato, §12): las cuentas de prueba
-   viven acá y la "sesión" es un registro en localStorage. Cuando exista el
-   user pool, este archivo se reemplaza por el flujo Authorization Code + PKCE
-   y el resto de la tienda no se entera, porque todo lo demás sólo consume
-   `usuarioIdActual()` y `sesionActual()`.
+   Desde la fase 4 (§12 del contrato) la identidad la emite **Amazon Cognito**:
+   la pantalla de ingreso entrega correo y contraseña a `lib/cognito.ts` y lo
+   que se guarda acá es el ID token que devuelve el user pool. Ya no hay cuentas
+   ni contraseñas en el frontend.
+
+   Quién valida qué:
+   - esta capa sólo LEE los claims, para pintar el nombre y elegir el menú;
+   - el API Gateway valida firma, emisor y expiración contra el JWKS del user
+     pool, y además reescribe `X-Usuario-Id` con `claims.email`, así que un
+     cliente ya no puede declarar ser otro mandando la cabecera a mano.
 
    Por qué el usuarioId es estable (y no uno nuevo por intento ni por carga):
    - el antifraude de ms-pago y los carritos de ms-carrito se indexan por él;
@@ -13,27 +18,27 @@
      el carrito se pierda al recargar;
    - ms-recomendaciones aprende del historial de ESE id; un id nuevo en cada
      visita siempre recibe "sin historial".
-   Logueado → el email (lo que en fase 4 será el `sub` del JWT).
-   Anónimo  → "anon-<uuid>" generado una vez y guardado en este navegador.
+   Logueado → el email del ID token (el valor que exige el contrato §12).
+   Anónimo  → "anon-<uuid>" generado una vez y guardado en este navegador: el
+   catálogo, el carrito y las recomendaciones siguen funcionando sin cuenta.
    ------------------------------------------------------------------------- */
+import { autenticar, claimsDe, ErrorCognito, refrescar, vencido, type Tokens } from './cognito'
 
 export type Rol = 'cliente' | 'admin'
 export type Sesion = { email: string; nombre: string; rol: Rol }
 
+/* Lo que se persiste: la sesión visible más los tokens. El ID token dura 8 h y
+   el refresh token 30 días; se renueva cuando al primero le queda poco. */
+type SesionGuardada = Sesion & { tokens: Tokens }
+
 const CLAVE_SESION = 'p360.sesion'
 const CLAVE_ANONIMO = 'p360.anonimo'
 
-/* Cuentas de demostración (las mismas del prototipo y del README). Las claves
-   en el frontend son aceptables SÓLO porque no protegen nada: el backend no
-   valida identidad hasta la fase 4. */
-const CUENTAS_DEMO: Record<string, { nombre: string; clave: string; rol: Rol }> = {
-  'ana@correo.cl': { nombre: 'Ana Rojas', clave: '1234', rol: 'cliente' },
-  'admin@pedidos360.cl': { nombre: 'Administrador', clave: 'admin123', rol: 'admin' },
-}
-
+/* Los correos de prueba siguen a mano en la pantalla de ingreso, pero las
+   contraseñas ya NO están en el frontend: viven en el user pool de Cognito. */
 export const CUENTAS_PRUEBA = [
-  { etiqueta: 'Cliente', email: 'ana@correo.cl', clave: '1234' },
-  { etiqueta: 'Admin', email: 'admin@pedidos360.cl', clave: 'admin123' },
+  { etiqueta: 'Cliente', email: 'ana@correo.cl' },
+  { etiqueta: 'Admin', email: 'admin@pedidos360.cl' },
 ] as const
 
 function leer<T>(clave: string): T | null {
@@ -71,9 +76,32 @@ export function idAnonimo(): string {
   return id
 }
 
+function guardar(s: SesionGuardada): void {
+  try {
+    localStorage.setItem(CLAVE_SESION, JSON.stringify(s))
+  } catch {
+    /* sin storage la sesión vive sólo lo que dure la pestaña */
+  }
+}
+
+function guardada(): SesionGuardada | null {
+  const s = leer<SesionGuardada>(CLAVE_SESION)
+  if (!s || typeof s.email !== 'string' || (s.rol !== 'cliente' && s.rol !== 'admin')) return null
+  if (!s.tokens || typeof s.tokens.idToken !== 'string') return null
+  return s
+}
+
 export function sesionActual(): Sesion | null {
-  const s = leer<Sesion>(CLAVE_SESION)
-  return s && typeof s.email === 'string' && (s.rol === 'cliente' || s.rol === 'admin') ? s : null
+  const s = guardada()
+  if (!s) return null
+  /* Un ID token vencido y sin refresh token no es una sesión: mejor mandar a
+     ingresar de nuevo que dejar la tienda diciendo "Ana" mientras cada llamada
+     responde 401. */
+  if (vencido(s.tokens, 0) && !s.tokens.refreshToken) {
+    cerrarSesion()
+    return null
+  }
+  return { email: s.email, nombre: s.nombre, rol: s.rol }
 }
 
 /** El id que viaja en X-Usuario-Id, en clientId de ms-pago y en userId de recomendaciones. */
@@ -81,19 +109,53 @@ export function usuarioIdActual(sesion: Sesion | null = sesionActual()): string 
   return sesion ? sesion.email : idAnonimo()
 }
 
+/** ID token para la cabecera Authorization, o null si se navega como anónimo. */
+export function tokenActual(): string | null {
+  const s = guardada()
+  return s ? s.tokens.idToken : null
+}
+
+/* El rol sale del grupo de Cognito, no de una tabla en el frontend: quien
+   decide quién es admin es el user pool. */
+function rolDe(grupos: string[] | undefined): Rol {
+  return grupos?.includes('admin') ? 'admin' : 'cliente'
+}
+
 export type ResultadoLogin = { ok: true; sesion: Sesion } | { ok: false; error: string }
 
-export function iniciarSesion(email: string, clave: string): ResultadoLogin {
+export async function iniciarSesion(email: string, clave: string): Promise<ResultadoLogin> {
   const correo = email.trim().toLowerCase()
-  const cuenta = CUENTAS_DEMO[correo]
-  if (!cuenta || cuenta.clave !== clave) return { ok: false, error: 'Correo o contraseña incorrectos.' }
-  const sesion: Sesion = { email: correo, nombre: cuenta.nombre, rol: cuenta.rol }
   try {
-    localStorage.setItem(CLAVE_SESION, JSON.stringify(sesion))
-  } catch {
-    /* sin storage la sesión vive sólo en memoria (la devuelve igual) */
+    const tokens = await autenticar(correo, clave)
+    const claims = claimsDe(tokens.idToken)
+    if (!claims) return { ok: false, error: 'El servicio de identidad devolvió un token que no se pudo leer.' }
+    const sesion: Sesion = {
+      email: claims.email,
+      nombre: claims.name || claims.email,
+      rol: rolDe(claims['cognito:groups']),
+    }
+    guardar({ ...sesion, tokens })
+    return { ok: true, sesion }
+  } catch (e) {
+    if (e instanceof ErrorCognito) return { ok: false, error: e.message }
+    return { ok: false, error: 'No se pudo iniciar sesión.' }
   }
-  return { ok: true, sesion }
+}
+
+/* Renueva el ID token cuando le queda menos de un minuto. La llama el cliente
+   HTTP antes de cada petición: con el token vencido el gateway responde 401 y
+   la pantalla mostraría un error que el usuario no provocó. */
+export async function asegurarTokenVigente(): Promise<void> {
+  const s = guardada()
+  if (!s || !vencido(s.tokens) || !s.tokens.refreshToken) return
+  try {
+    const tokens = await refrescar(s.tokens.refreshToken)
+    guardar({ email: s.email, nombre: s.nombre, rol: s.rol, tokens })
+  } catch {
+    /* El refresh token también vence o se revoca: se cierra la sesión y la
+       próxima pantalla manda a ingresar. */
+    cerrarSesion()
+  }
 }
 
 export function cerrarSesion(): void {

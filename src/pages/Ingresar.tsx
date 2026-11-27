@@ -1,12 +1,14 @@
 import { useState, type FormEvent } from 'react'
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { Aviso } from '../components/ui'
+import { COGNITO } from '../config'
 import { CUENTAS_PRUEBA } from '../lib/auth'
 import { useTienda } from '../state/contexto'
 
 /* ---------------------------------------------------------------------------
-   Ingreso con cuentas de demostración. PROVISORIO hasta Cognito (§12): toda
-   la lógica de identidad está en lib/auth.ts y esta pantalla sólo la usa.
+   Ingreso con cuentas de **Amazon Cognito** (§12 del contrato, fase 4). Toda la
+   lógica de identidad está en lib/auth.ts + lib/cognito.ts y esta pantalla sólo
+   la usa: acá no hay contraseñas ni roles escritos a mano.
    `volver` sólo acepta rutas internas ("/…") para que un enlace armado no
    pueda redirigir a otro sitio después del login.
    ------------------------------------------------------------------------- */
@@ -92,7 +94,6 @@ export function Ingresar() {
               className="btn btn--ghost"
               onClick={() => {
                 setEmail(c.email)
-                setClave(c.clave)
                 setError(null)
               }}
             >
@@ -101,7 +102,16 @@ export function Ingresar() {
           ))}
         </div>
         <p className="tenue" style={{ fontSize: 12, marginTop: 12 }}>
-          Acceso de demostración: las cuentas viven en la tienda hasta integrar Cognito. <Link to="/">Volver a la tienda</Link>
+          {COGNITO.clientId ? (
+            <>
+              Las cuentas y las contraseñas viven en el user pool de Amazon Cognito; la tienda no las guarda. <Link to="/">Volver a la tienda</Link>
+            </>
+          ) : (
+            <>
+              Esta copia de la tienda no tiene configurado Cognito (<code>COGNITO_CLIENT_ID</code>), así que no se puede
+              iniciar sesión. El catálogo y el carrito funcionan igual. <Link to="/">Volver a la tienda</Link>
+            </>
+          )}
         </p>
       </div>
     </section>

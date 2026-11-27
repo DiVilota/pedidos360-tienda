@@ -7,6 +7,9 @@ type RuntimeConfig = {
   pagos?: string
   recomendaciones?: string
   notificaciones?: string
+  cognitoRegion?: string
+  cognitoClientId?: string
+  cognitoPoolId?: string
 }
 
 declare global {
@@ -16,6 +19,9 @@ declare global {
 }
 
 const cfg: RuntimeConfig = (typeof window !== 'undefined' && window.PEDIDOS360_CONFIG) || {}
+
+/* Igual que `cfg`, pero releído en cada acceso (ver COGNITO más abajo). */
+const actual = (): RuntimeConfig => (typeof window !== 'undefined' && window.PEDIDOS360_CONFIG) || {}
 
 /* Una barra final duplicaría la barra de cada ruta ("…8086//api/productos"),
    y algunos gateways responden 404 a eso. Se normaliza una sola vez acá. */
@@ -30,6 +36,29 @@ export const API = {
 }
 
 export type Servicio = keyof typeof API
+
+/* Identidad (Cognito User Pools). Igual que las URL: no se compila dentro del
+   bundle, llega por config.js, porque el user pool del Learner Lab se recrea
+   cada vez que caduca el lab y la imagen no debería reconstruirse por eso.
+   Sin cognitoClientId la tienda arranca igual y la pantalla de ingreso lo dice;
+   así el catálogo sigue navegable aunque la identidad no esté configurada.
+
+   Se lee con getters, no una sola vez al importar: config.js se carga antes del
+   bundle en producción, pero en los tests la configuración se cambia entre
+   casos y un valor congelado al importar obligaría a recargar el módulo. */
+const texto = (v: string | undefined, porDefecto = '') => (v && v.trim() ? v.trim() : porDefecto)
+
+export const COGNITO = {
+  get region() {
+    return texto(actual().cognitoRegion, 'us-east-1')
+  },
+  get clientId() {
+    return texto(actual().cognitoClientId)
+  },
+  get poolId() {
+    return texto(actual().cognitoPoolId)
+  },
+}
 
 /* Etiqueta y puerto de cada servicio para la insignia de salud del header. */
 export const SERVICIOS: { clave: Servicio; nombre: string }[] = [

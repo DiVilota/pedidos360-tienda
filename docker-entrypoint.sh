@@ -13,6 +13,15 @@
 #   API_RECOMENDACIONES  http://localhost:8084
 #   API_NOTIFICACIONES   http://localhost:8088
 #
+# Identidad (Cognito User Pools), sin valor por defecto:
+#   COGNITO_REGION       us-east-1
+#   COGNITO_CLIENT_ID    id del app client de la tienda (sin secreto)
+#   COGNITO_POOL_ID      sólo informativo, para saber contra qué pool se mira
+# Sin COGNITO_CLIENT_ID la tienda arranca y el catálogo se navega igual; lo que
+# no se puede es iniciar sesión, y la pantalla de ingreso lo dice. El pool del
+# Learner Lab se recrea cuando caduca el lab, y por eso esto es configuración
+# de arranque y no algo compilado dentro del bundle.
+#
 # En AWS, con API Gateway delante, todas pueden apuntar a la misma base y se
 # diferencian por la ruta del recurso, por ejemplo:
 #   API_PAGOS=https://abc123.execute-api.us-east-1.amazonaws.com/desarrollo
@@ -29,7 +38,10 @@ window.PEDIDOS360_CONFIG = {
   carrito:         "${API_CARRITO:-http://localhost:8087}",
   pagos:           "${API_PAGOS:-http://localhost:8083}",
   recomendaciones: "${API_RECOMENDACIONES:-http://localhost:8084}",
-  notificaciones:  "${API_NOTIFICACIONES:-http://localhost:8088}"
+  notificaciones:  "${API_NOTIFICACIONES:-http://localhost:8088}",
+  cognitoRegion:   "${COGNITO_REGION:-us-east-1}",
+  cognitoClientId: "${COGNITO_CLIENT_ID:-}",
+  cognitoPoolId:   "${COGNITO_POOL_ID:-}"
 };
 EOF
 

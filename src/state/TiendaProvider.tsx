@@ -145,7 +145,7 @@ export function TiendaProvider({ children }: { children: ReactNode }) {
   /* ---------------------------- sesión ---------------------------- */
   const ingresar = useCallback(
     async (email: string, clave: string) => {
-      const r = iniciarSesion(email, clave)
+      const r = await iniciarSesion(email, clave)
       if (!r.ok) return r
       /* El carrito armado como anónimo se traslada a la cuenta: si no, al
          iniciar sesión para pagar el cliente vería su carrito vacío. */

@@ -38,7 +38,7 @@ function Panel({ titulo, sub, error, children, completo }: { titulo: string; sub
 }
 
 export function Admin() {
-  const { categorias, avisar, recargarCatalogo } = useTienda()
+  const { categorias, avisar, recargarCatalogo, usuarioId } = useTienda()
   const [resumen, setResumen] = useState<Carga<ResumenAdmin>>(vacio)
   const [stock, setStock] = useState<Carga<StockAdmin[]>>(vacio)
   const [pedidos, setPedidos] = useState<Carga<Pedido[]>>(vacio)
@@ -46,12 +46,16 @@ export function Admin() {
   const [actualizado, setActualizado] = useState<number | null>(null)
 
   const cargar = useCallback(async () => {
-    const [r, s, p] = await Promise.allSettled([adminCarrito.resumen(), apiProductos.stockAdmin(), adminCarrito.pedidos()])
+    const [r, s, p] = await Promise.allSettled([
+      adminCarrito.resumen(usuarioId),
+      apiProductos.stockAdmin(usuarioId),
+      adminCarrito.pedidos(usuarioId),
+    ])
     setResumen(r.status === 'fulfilled' ? { datos: r.value, error: null } : (prev) => ({ datos: prev.datos, error: textoError(r.reason, 'ms-carrito') }))
     setStock(s.status === 'fulfilled' ? { datos: s.value, error: null } : (prev) => ({ datos: prev.datos, error: textoError(s.reason, 'ms-productos') }))
     setPedidos(p.status === 'fulfilled' ? { datos: p.value, error: null } : (prev) => ({ datos: prev.datos, error: textoError(p.reason, 'ms-carrito') }))
     setActualizado(Date.now())
-  }, [])
+  }, [usuarioId])
 
   useEffect(() => {
     void cargar()
@@ -62,9 +66,9 @@ export function Admin() {
   const reponer = async (s: StockAdmin) => {
     setReponiendo(s.id)
     try {
-      await apiProductos.reponer(s.id, REPOSICION)
+      await apiProductos.reponer(s.id, REPOSICION, usuarioId)
       avisar(`${s.nombre}: +${REPOSICION} unidades`)
-      const nuevo = await apiProductos.stockAdmin()
+      const nuevo = await apiProductos.stockAdmin(usuarioId)
       setStock({ datos: nuevo, error: null })
       /* El catálogo de la tienda también muestra stock: se relee. */
       void recargarCatalogo()

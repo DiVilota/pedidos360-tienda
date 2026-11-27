@@ -1,4 +1,5 @@
 import { API } from '../config'
+import { tokenActual } from './auth'
 import type {
   Carrito,
   Categoria,
@@ -85,11 +86,23 @@ async function pedir<T>(url: string, init: RequestInit = {}): Promise<T> {
 }
 
 /* Identidad mientras no exista Cognito: el contrato la resuelve en el backend
-   con X-Usuario-Id (Component/UsuarioActual), así que acá sólo se adjunta. */
-const conUsuario = (usuarioId: string, init: RequestInit = {}): RequestInit => ({
-  ...init,
-  headers: { ...(init.headers as Record<string, string> | undefined), 'X-Usuario-Id': usuarioId },
-})
+   con X-Usuario-Id (Component/UsuarioActual), así que acá sólo se adjunta.
+   Con Cognito ya integrado se adjunta ADEMÁS el ID token: en las rutas
+   protegidas el API Gateway lo valida y reescribe X-Usuario-Id con el claim
+   `email`, de modo que la cabecera deja de ser falsificable. Se sigue mandando
+   la cabecera porque el anónimo (sin token) también compra y porque los
+   servicios siguen siendo los mismos en local, donde no hay gateway. */
+const conUsuario = (usuarioId: string, init: RequestInit = {}): RequestInit => {
+  const token = tokenActual()
+  return {
+    ...init,
+    headers: {
+      ...(init.headers as Record<string, string> | undefined),
+      'X-Usuario-Id': usuarioId,
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  }
+}
 
 const cuerpoJson = (metodo: string, body: unknown): RequestInit => ({
   method: metodo,
@@ -124,11 +137,15 @@ export const productos = {
   detalle: (id: string, usuarioId: string) =>
     pedir<Producto>(`${API.productos}/api/productos/${enc(id)}`, conUsuario(usuarioId)),
 
-  stockAdmin: () => pedir<StockAdmin[]>(`${API.productos}/api/productos/admin/stock`),
+  /* El panel admin de la tienda manda el ID token: estas dos rutas van
+     protegidas con el authorizer de Cognito en el gateway, y sin token
+     responderían 401. El usuarioId que viaja es el del admin en sesión. */
+  stockAdmin: (usuarioId: string) =>
+    pedir<StockAdmin[]>(`${API.productos}/api/productos/admin/stock`, conUsuario(usuarioId)),
 
   /** Reponer: suma `cantidad` unidades al inventario. */
-  reponer: (id: string, cantidad: number) =>
-    pedir<Producto>(`${API.productos}/api/productos/${enc(id)}/stock`, cuerpoJson('PUT', { cantidad })),
+  reponer: (id: string, cantidad: number, usuarioId: string) =>
+    pedir<Producto>(`${API.productos}/api/productos/${enc(id)}/stock`, conUsuario(usuarioId, cuerpoJson('PUT', { cantidad }))),
 }
 
 /* ========================= ms-carrito :8087 ========================= */
@@ -172,8 +189,10 @@ export const pedidos = {
 }
 
 export const adminCarrito = {
-  resumen: () => pedir<ResumenAdmin>(`${API.carrito}/api/admin/resumen`),
-  pedidos: () => pedir<Pedido[]>(`${API.carrito}/api/admin/pedidos`),
+  /* Protegidas con el authorizer de Cognito: el panel manda el ID token del
+     admin en sesión, igual que las dos de ms-productos. */
+  resumen: (usuarioId: string) => pedir<ResumenAdmin>(`${API.carrito}/api/admin/resumen`, conUsuario(usuarioId)),
+  pedidos: (usuarioId: string) => pedir<Pedido[]>(`${API.carrito}/api/admin/pedidos`, conUsuario(usuarioId)),
 }
 
 /* =========================== ms-pago :8083 =========================== */
