@@ -19,10 +19,11 @@ export type EstadoStream = 'conectando' | 'abierto' | 'reintentando' | 'rendido'
 export type Toast = { id: number; texto: string; tono: 'ok' | 'bad'; verCarrito?: boolean }
 
 export type Tienda = {
-  /* identidad (provisoria hasta Cognito: ver lib/auth.ts) */
+  /* identidad: la emite Amazon Cognito (ver lib/auth.ts y lib/cognito.ts) */
   sesion: Sesion | null
   usuarioId: string
   ingresar: (email: string, clave: string) => Promise<{ ok: true; sesion: Sesion } | { ok: false; error: string }>
+  registrarse: (email: string, clave: string, nombre: string) => Promise<{ ok: true; sesion: Sesion } | { ok: false; error: string }>
   salir: () => void
 
   /* catálogo completo en memoria: deseos, populares, hero y nombres */

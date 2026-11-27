@@ -273,9 +273,16 @@ export function Header() {
         {sesion ? (
           <MenuCuenta />
         ) : (
-          <Link to="/ingresar" className="btn btn--ghost" style={{ height: 40, fontSize: 13 }}>
-            Ingresar
-          </Link>
+          /* Dos accesos, no uno: con solo "Ingresar", quien no tiene cuenta no
+             sabe que puede crearla y abandona en la puerta. */
+          <div style={{ display: 'flex', gap: 8 }}>
+            <Link to="/ingresar" className="btn btn--ghost" style={{ height: 40, fontSize: 13 }}>
+              Ingresar
+            </Link>
+            <Link to="/ingresar?modo=crear" className="btn btn--primario" style={{ height: 40, fontSize: 13 }}>
+              Crear cuenta
+            </Link>
+          </div>
         )}
       </div>
     </header>

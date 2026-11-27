@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { useNotificaciones } from '../hooks/useNotificaciones'
 import { useSalud } from '../hooks/useSalud'
 import { ApiError, carrito as apiCarrito, productos as apiProductos } from '../lib/api'
-import { cerrarSesion, iniciarSesion, idAnonimo, sesionActual, usuarioIdActual, type Sesion } from '../lib/auth'
+import { cerrarSesion, crearCuenta, iniciarSesion, idAnonimo, sesionActual, usuarioIdActual, type Sesion } from '../lib/auth'
 import { alternar, guardarDeseos, leerDeseos } from '../lib/deseos'
 import { borrarSenales, leerSenales, registrarSenal, type Senal } from '../lib/senales'
 import type { Carrito, Categoria, Producto } from '../lib/types'
@@ -172,6 +172,19 @@ export function TiendaProvider({ children }: { children: ReactNode }) {
     setDeseosAbierto(false)
   }, [])
 
+  /* Crear cuenta y entrar: el traslado del carrito anónimo es el mismo trabajo
+     que al iniciar sesión, así que se reusa `ingresar` en vez de duplicarlo.
+     Importa de verdad acá: quien se registra suele venir de armar un carrito
+     sin cuenta y, al llegar al checkout, crearla. */
+  const registrarse = useCallback(
+    async (email: string, clave: string, nombre: string) => {
+      const alta = await crearCuenta(email, clave, nombre)
+      if (!alta.ok) return alta
+      return await ingresar(email, clave)
+    },
+    [ingresar],
+  )
+
   /* ----------------------------- deseos ----------------------------- */
   const alternarDeseo = useCallback((id: string) => {
     setDeseos((prev) => {
@@ -198,6 +211,7 @@ export function TiendaProvider({ children }: { children: ReactNode }) {
     sesion,
     usuarioId,
     ingresar,
+    registrarse,
     salir,
     catalogo,
     categorias,

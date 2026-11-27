@@ -22,7 +22,7 @@
    Anónimo  → "anon-<uuid>" generado una vez y guardado en este navegador: el
    catálogo, el carrito y las recomendaciones siguen funcionando sin cuenta.
    ------------------------------------------------------------------------- */
-import { autenticar, claimsDe, ErrorCognito, refrescar, vencido, type Tokens } from './cognito'
+import { autenticar, claimsDe, ErrorCognito, refrescar, registrar, vencido, type Tokens } from './cognito'
 
 export type Rol = 'cliente' | 'admin'
 export type Sesion = { email: string; nombre: string; rol: Rol }
@@ -139,6 +139,23 @@ export async function iniciarSesion(email: string, clave: string): Promise<Resul
   } catch (e) {
     if (e instanceof ErrorCognito) return { ok: false, error: e.message }
     return { ok: false, error: 'No se pudo iniciar sesión.' }
+  }
+}
+
+/* Crea la cuenta en Cognito y, si queda confirmada, inicia sesión con ella: en
+   el lab el trigger PreSignUp la confirma al instante, así que pedirle al
+   usuario que "revise su correo" sería mentirle. */
+export async function crearCuenta(email: string, clave: string, nombre: string): Promise<ResultadoLogin> {
+  const correo = email.trim().toLowerCase()
+  try {
+    const { confirmada } = await registrar(correo, clave, nombre)
+    if (!confirmada) {
+      return { ok: false, error: 'La cuenta se creó pero necesita confirmarse por correo antes de entrar.' }
+    }
+    return await iniciarSesion(correo, clave)
+  } catch (e) {
+    if (e instanceof ErrorCognito) return { ok: false, error: e.message }
+    return { ok: false, error: 'No se pudo crear la cuenta.' }
   }
 }
 

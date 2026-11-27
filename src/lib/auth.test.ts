@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { cerrarSesion, idAnonimo, iniciarSesion, sesionActual, tokenActual, usuarioIdActual } from './auth'
+import { cerrarSesion, crearCuenta, idAnonimo, iniciarSesion, sesionActual, tokenActual, usuarioIdActual } from './auth'
 
 /* Cognito se contesta con un doble de fetch: estos casos prueban QUÉ hace la
    tienda con la respuesta del user pool (qué guarda, qué id usa, qué rol
@@ -105,5 +105,42 @@ describe('identidad', () => {
     expect(r.ok).toBe(false)
     expect(r.ok === false && r.error).toMatch(/COGNITO_CLIENT_ID/)
     expect(llamada).not.toHaveBeenCalled()
+  })
+})
+
+describe('crear cuenta', () => {
+  it('registra, entra sola y deja la sesión lista', async () => {
+    /* SignUp y despues InitiateAuth: la cuenta queda confirmada por el trigger
+       PreSignUp, asi que no hay que pedir ningun codigo. */
+    const respuestas = [
+      { UserConfirmed: true, UserSub: 'sub-1' },
+      tokensDe({ email: 'nueva@correo.cl', name: 'Persona Nueva', 'cognito:groups': [] }),
+    ]
+    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, status: 200, text: async () => JSON.stringify(respuestas.shift()) }) as Response))
+    const r = await crearCuenta('  Nueva@Correo.cl ', 'Cordillera2026', 'Persona Nueva')
+    expect(r.ok).toBe(true)
+    expect(sesionActual()?.email).toBe('nueva@correo.cl')
+    expect(sesionActual()?.rol).toBe('cliente')
+    expect(tokenActual()).toContain('.')
+  })
+
+  it('si la cuenta quedara sin confirmar, lo dice y no inventa una sesión', async () => {
+    vi.stubGlobal('fetch', respondeCognito({ UserConfirmed: false, UserSub: 'sub-2' }))
+    const r = await crearCuenta('otra@correo.cl', 'Cordillera2026', 'Otra')
+    expect(r.ok).toBe(false)
+    expect(r.ok === false && r.error).toMatch(/confirmarse por correo/)
+    expect(sesionActual()).toBeNull()
+  })
+
+  it('traduce el correo ya registrado', async () => {
+    vi.stubGlobal('fetch', respondeCognito({ __type: 'UsernameExistsException', message: 'User already exists' }, false, 400))
+    const r = await crearCuenta('ana@correo.cl', 'Cordillera2026', 'Ana')
+    expect(r.ok === false && r.error).toMatch(/Ya existe una cuenta/)
+  })
+
+  it('traduce la contraseña que no cumple la política', async () => {
+    vi.stubGlobal('fetch', respondeCognito({ __type: 'InvalidPasswordException', message: 'Password did not conform' }, false, 400))
+    const r = await crearCuenta('otra2@correo.cl', 'corta', 'Otra')
+    expect(r.ok === false && r.error).toMatch(/10 caracteres/)
   })
 })

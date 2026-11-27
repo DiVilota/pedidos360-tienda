@@ -60,6 +60,10 @@ const MENSAJES: Record<string, string> = {
   LimitExceededException: 'Demasiados intentos. Espera unos segundos.',
   InvalidParameterException: 'Revisa el correo y la contraseña.',
   ResourceNotFoundException: 'La configuración de Cognito no es válida (user pool o cliente).',
+  /* Registro */
+  UsernameExistsException: 'Ya existe una cuenta con ese correo. Inicia sesión.',
+  InvalidPasswordException: 'La contraseña no cumple el mínimo: 10 caracteres, con mayúscula, minúscula y número.',
+  CodeDeliveryFailureException: 'No se pudo enviar el correo de verificación.',
 }
 
 /** El tipo llega como "...#NotAuthorizedException" o en el campo __type. */
@@ -130,6 +134,29 @@ export async function autenticar(email: string, clave: string): Promise<Tokens> 
     AuthParameters: { USERNAME: email, PASSWORD: clave },
   })
   return tokensDe(r)
+}
+
+type RespuestaRegistro = { UserConfirmed?: boolean; UserSub?: string }
+
+/* Crea la cuenta en el user pool.
+
+   La cuenta queda CONFIRMADA al instante por un trigger PreSignUp
+   (`despliegue/18-cognito-registro.sh`): en el Learner Lab no hay servidor de
+   correo, así que el código de verificación que Cognito manda nunca llegaría y
+   el usuario quedaría sin poder entrar. `confirmada` se devuelve para que la
+   pantalla no prometa un inicio de sesión automático si algún día el trigger
+   no está y hace falta el código. */
+export async function registrar(email: string, clave: string, nombre: string): Promise<{ confirmada: boolean }> {
+  const r = await llamar<RespuestaRegistro>('SignUp', {
+    ClientId: COGNITO.clientId,
+    Username: email,
+    Password: clave,
+    UserAttributes: [
+      { Name: 'email', Value: email },
+      ...(nombre.trim() ? [{ Name: 'name', Value: nombre.trim() }] : []),
+    ],
+  })
+  return { confirmada: r.UserConfirmed === true }
 }
 
 /** Renueva el ID token sin volver a pedir la contraseña. */
